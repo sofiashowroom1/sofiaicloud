@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SISTEMA TEXTIL CLOUD - 2026</title>
+    <style>
+        :root { --p: #0f172a; --s: #e11d48; --v: #10b981; --t: #f1f5f9; --a: #2563eb; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--t); }
+        nav { width: 220px; background: var(--p); color: white; height: 100vh; position: fixed; padding: 20px; box-sizing: border-box; }
+        nav h2 { color: var(--s); text-align: center; font-size: 18px; margin-bottom: 20px; }
+        nav button { width: 100%; padding: 12px; margin-bottom: 8px; border: none; background: #1e293b; color: #94a3b8; cursor: pointer; border-radius: 8px; text-align: left; }
+        nav button.active { background: var(--s); color: white; font-weight: bold; }
+        main { margin-left: 220px; padding: 30px; width: calc(100% - 220px); }
+        .seccion { display: none; }
+        .activa { display: block; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-v { background: var(--v); width: 100%; font-size: 18px; }
+        .btn-a { background: var(--a); }
+        .btn-r { background: var(--s); }
+        .btn-edit { background: #64748b; padding: 5px 8px; font-size: 12px; }
+        #status { position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: #666; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h2>TEXTIL CLOUD</h2>
+    <button onclick="ir('v')" id="m-v" class="active">🛒 VENTAS</button>
+    <button onclick="ir('s')" id="m-s">📦 STOCK</button>
+    <button onclick="ir('c')" id="m-c">👥 CLIENTES</button>
+    <button onclick="ir('x')" id="m-x">💰 CAJA</button>
+    <button onclick="ir('r')" id="m-r">📊 REPORTES</button>
+</nav>
+
+<main>
+    <div id="v" class="seccion activa">
+        <div class="card">
+            <h2>Nueva Venta</h2>
+            <div class="grid">
+                <input type="text" id="v-scan" placeholder="Escanear Cód. + Enter" onkeypress="if(event.key=='Enter') addCarro()">
+                <select id="v-pago"><option>EFECTIVO</option><option>TRANSFERENCIA</option><option>TARJETA</option><option>CUENTA CORRIENTE</option></select>
+                <select id="v-cli"></select>
+            </div>
+            <table><thead><tr><th>Producto</th><th>Precio</th><th>Acción</th></tr></thead><tbody id="v-t"></tbody></table>
+            <h2 style="text-align:right">TOTAL: $<span id="v-tot">0</span></h2>
+            <button onclick="finalizarVenta()" class="btn btn-v">REGISTRAR Y TICKET</button>
+        </div>
+    </div>
+
+    <div id="s" class="seccion">
+        <div class="card">
+            <h2>Gestión de Inventario</h2>
+            <div class="grid">
+                <input type="hidden" id="s-key"> <input type="text" id="s-cod" placeholder="Código">
+                <input type="text" id="s-nom" placeholder="Prenda/Nombre">
+                <input type="number" id="s-can" placeholder="Stock">
+                <input type="number" id="s-cos" placeholder="Costo $">
+                <input type="number" id="s-pre" placeholder="Venta $">
+            </div>
+            <div style="display:flex; gap:10px">
+                <button onclick="pushStock()" id="btn-stock-save" class="btn btn-a" style="flex:2">GUARDAR / ACTUALIZAR</button>
+                <button onclick="limpiarInputs('s')" class="btn btn-r" style="flex:1">CANCELAR</button>
+            </div>
+            <hr>
+            <input type="text" id="s-search" placeholder="🔍 Buscar por nombre o código..." oninput="render()" style="margin-top:20px">
+            <table><thead><tr><th>Cód</th><th>Prenda</th><th>Stock</th><th>Venta</th><th>Acciones</th></tr></thead><tbody id="s-t"></tbody></table>
+        </div>
+    </div>
+
+    <div id="c" class="seccion"><div class="card"><h2>Clientes</h2><div class="grid"><input type="text" id="c-nom" placeholder="Nombre"><input type="text" id="c-dni" placeholder="DNI"><input type="number" id="c-lim" placeholder="Límite $"><select id="c-rec"><option>CON RECIBO</option><option>SIN RECIBO</option></select></div><button onclick="pushCli()" class="btn btn-a" style="width:100%">GUARDAR CLIENTE</button><table><thead><tr><th>Nombre</th><th>DNI</th><th>Deuda CC</th><th>Acción</th></tr></thead><tbody id="c-t"></tbody></table></div></div>
+    <div id="x" class="seccion"><div class="card" style="border-top: 5px solid var(--s)"><h2>Gastos</h2><div class="grid"><input type="text" id="x-con" placeholder="Motivo"><input type="number" id="x-mon" placeholder="Monto $"><button onclick="pushGasto()" class="btn btn-r">REGISTRAR GASTO</button></div><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Medio</th><th>Monto</th></tr></thead><tbody id="x-t"></tbody></table></div></div>
+    <div id="r" class="seccion"><div class="card"><h2>Reportes</h2><div class="grid"><input type="date" id="r-d"><input type="date" id="r-h"><button onclick="render()" class="btn btn-a">FILTRAR</button></div><div class="grid"><div class="card" style="background:var(--v); color:white"><h4>INGRESOS</h4><h2 id="ri">$0</h2></div><div class="card" style="background:var(--s); color:white"><h4>EGRESOS</h4><h2 id="re">$0</h2></div><div class="card" style="background:var(--a); color:white"><h4>NETO</h4><h2 id="rn">$0</h2></div></div></div></div>
+</main>
+
+<div id="status">Sincronizado Cloud ☁️</div>
+
+<script>
+    const DB_URL = "https://sofia-sistema-default-rtdb.firebaseio.com/"; 
+    let db = { stock: {}, clientes: {}, caja: {} };
+    let carro = [];
+
+    // --- SINCRONIZACIÓN ---
+    async function syncDB(path, data) {
+        document.getElementById('status').innerText = "Guardando...";
+        await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) });
+        document.getElementById('status').innerText = "Sincronizado Cloud ☁️";
+        loadDB();
+    }
+
+    async function loadDB() {
+        const res = await fetch(DB_URL + ".json");
+        const data = await res.json();
+        if(data) {
+            db.stock = data.stock || {};
+            db.clientes = data.clientes || {};
+            db.caja = data.caja || {};
+            render();
+        }
+    }
+
+    // --- NAVEGACIÓN ---
+    function ir(id) {
+        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('activa');
+        document.getElementById('m-'+id).classList.add('active');
+    }
+
+    // --- OPCIÓN 1: LIMPIEZA DE FORMULARIOS ---
+    function limpiarInputs(prefijo) {
+        document.querySelectorAll(`input[id^="${prefijo}-"]`).forEach(i => i.value = '');
+        if(prefijo === 's') document.getElementById('s-key').value = '';
+    }
+
+    // --- OPCIÓN 2: GESTIÓN Y EDICIÓN DE STOCK ---
+    async function pushStock() {
+        let key = document.getElementById('s-key').value || "S" + Date.now();
+        db.stock[key] = {
+            cod: document.getElementById('s-cod').value,
+            nom: document.getElementById('s-nom').value,
+            can: parseInt(document.getElementById('s-can').value),
+            cos: document.getElementById('s-cos').value,
+            pre: document.getElementById('s-pre').value
+        };
+        await syncDB("stock", db.stock);
+        limpiarInputs('s');
+    }
+
+    function editarProducto(key) {
+        let p = db.stock[key];
+        document.getElementById('s-key').value = key;
+        document.getElementById('s-cod').value = p.cod;
+        document.getElementById('s-nom').value = p.nom;
+        document.getElementById('s-can').value = p.can;
+        document.getElementById('s-cos').value = p.cos;
+        document.getElementById('s-pre').value = p.pre;
+        window.scrollTo(0,0);
+    }
+
+    // --- VENTAS Y CARRITO ---
+    function addCarro() {
+        let cod = document.getElementById('v-scan').value;
+        let item = Object.values(db.stock).find(s => s.cod == cod);
+        if(item && item.can > 0) {
+            carro.push({...item});
+            document.getElementById('v-scan').value = '';
+            renderV();
+        } else { alert("Sin stock o producto no encontrado"); }
+    }
+
+    function renderV() {
+        let t = 0;
+        document.getElementById('v-t').innerHTML = carro.map((i, idx) => {
+            t += parseInt(i.pre);
+            return `<tr><td>${i.nom}</td><td>$${i.pre}</td><td><button onclick="carro.splice(${idx},1);renderV()">❌</button></td></tr>`;
+        }).join('');
+        document.getElementById('v-tot').innerText = t;
+    }
+
+    // --- OPCIÓN 3: TICKET DE VENTA ---
+    async function finalizarVenta() {
+        if(carro.length == 0) return;
+        let tot = parseInt(document.getElementById('v-tot').innerText);
+        let met = document.getElementById('v-pago').value;
+        let cliId = document.getElementById('v-cli').value;
+
+        // Descontar Stock
+        carro.forEach(c => {
+            let key = Object.keys(db.stock).find(k => db.stock[k].cod == c.cod);
+            if(db.stock[key]) db.stock[key].can--;
+        });
+
+        if(met == "CUENTA CORRIENTE" && cliId != "null") {
+            db.clientes[cliId].saldo = (db.clientes[cliId].saldo || 0) + tot;
+        }
+
+        let idCaja = "C" + Date.now();
+        db.caja[idCaja] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "Venta: "+met, v: tot, tp: "ING", m: met };
+
+        // Generar Ticket (Ventana emergente)
+        let ticketWin = window.open('', '_blank', 'width=300,height=600');
+        ticketWin.document.write(`
+            <style>body{font-family:monospace; font-size:12px; padding:20px; width:200px}</style>
+            <center><b>TEXTIL CLOUD</b><br>Fecha: ${new Date().toLocaleDateString()}</center><br>
+            --------------------------<br>
+            ${carro.map(i => `${i.nom.substring(0,15)}... $${i.pre}`).join('<br>')}
+            <br>--------------------------<br>
+            <b>TOTAL: $${tot}</b><br>
+            Pago: ${met}<br><br>
+            <center>Gracias por su compra!</center>
+            <script>window.print(); window.close();<\/script>
+        `);
+
+        carro = []; 
+        renderV();
+        await syncDB("", db);
+    }
+
+    // --- RENDERIZADO GENERAL ---
+    function render() {
+        // Clientes Select
+        document.getElementById('v-cli').innerHTML = '<option value="null">Mostrador</option>' + 
+            Object.entries(db.clientes).map(([k,v]) => `<option value="${k}">${v.nom}</option>`).join('');
+        
+        // Stock con BUSCADOR
+        let search = document.getElementById('s-search').value.toLowerCase();
+        document.getElementById('s-t').innerHTML = Object.entries(db.stock)
+            .filter(([k,s]) => s.nom.toLowerCase().includes(search) || s.cod.includes(search))
+            .map(([k,s]) => `<tr><td>${s.cod}</td><td>${s.nom}</td><td><b>${s.can}</b></td><td>$${s.pre}</td><td><button class="btn btn-edit" onclick="editarProducto('${k}')">✏️</button></td></tr>`).join('');
+
+        // Clientes
+        document.getElementById('c-t').innerHTML = Object.entries(db.clientes).map(([k,v]) => `<tr><td>${v.nom}</td><td>${v.dni}</td><td style="color:red">$${v.saldo || 0}</td><td><button onclick="cobrar('${k}')">💸 Cobrar</button></td></tr>`).join('');
+
+        // Caja y Reportes
+        let d = document.getElementById('r-d').value;
+        let h = document.getElementById('r-h').value;
+        let si = 0, se = 0, htmlX = "";
+        Object.values(db.caja).reverse().forEach(x => {
+            if((!d || x.f >= d) && (!h || x.f <= h)) {
+                if(x.tp == "ING") si += x.v; else se += x.v;
+                htmlX += `<tr><td>${x.f}</td><td>${x.c}</td><td>${x.m}</td><td>$${x.v}</td></tr>`;
+            }
+        });
+        document.getElementById('x-t').innerHTML = htmlX;
+        document.getElementById('ri').innerText = "$"+si;
+        document.getElementById('re').innerText = "$"+se;
+        document.getElementById('rn').innerText = "$"+(si-se);
+    }
+
+    async function pushCli() {
+        let id = "L" + Date.now();
+        db.clientes[id] = { nom: document.getElementById('c-nom').value, dni: document.getElementById('c-dni').value, lim: document.getElementById('c-lim').value, rec: document.getElementById('c-rec').value, saldo: 0 };
+        await syncDB("clientes", db.clientes);
+        limpiarInputs('c');
+    }
+
+    async function pushGasto() {
+        let id = "X" + Date.now();
+        db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "GASTO: " + document.getElementById('x-con').value, v: parseInt(document.getElementById('x-mon').value), tp: "EGR", m: "EFECTIVO" };
+        await syncDB("caja", db.caja);
+        limpiarInputs('x');
+    }
+
+    async function cobrar(k) {
+        let m = parseInt(prompt("Monto que entrega el cliente:"));
+        if(m > 0) {
+            db.clientes[k].saldo -= m;
+            let id = "X" + Date.now();
+            db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "Cobro: "+db.clientes[k].nom, v: m, tp: "ING", m: "EFECTIVO" };
+            await syncDB("", db);
+        }
+    }
+
+    loadDB();
+</script>
+</body>
+</html>
