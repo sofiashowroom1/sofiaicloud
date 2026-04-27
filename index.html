@@ -2,129 +2,190 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA TEXTIL CLOUD - 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA TEXTIL CLOUD PRO - 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root { --p: #0f172a; --s: #e11d48; --v: #10b981; --t: #f1f5f9; --a: #2563eb; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--t); }
-        nav { width: 220px; background: var(--p); color: white; height: 100vh; position: fixed; padding: 20px; box-sizing: border-box; }
-        nav h2 { color: var(--s); text-align: center; font-size: 18px; margin-bottom: 20px; }
-        nav button { width: 100%; padding: 12px; margin-bottom: 8px; border: none; background: #1e293b; color: #94a3b8; cursor: pointer; border-radius: 8px; text-align: left; }
-        nav button.active { background: var(--s); color: white; font-weight: bold; }
-        main { margin-left: 220px; padding: 30px; width: calc(100% - 220px); }
+        :root { --primary: #0f172a; --accent: #e11d48; }
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         .seccion { display: none; }
-        .activa { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-v { background: var(--v); width: 100%; font-size: 18px; }
-        .btn-a { background: var(--a); }
-        .btn-r { background: var(--s); }
-        .btn-edit { background: #64748b; padding: 5px 8px; font-size: 12px; }
-        #status { position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: #666; }
+        .seccion.activa { display: block; animation: fadeIn 0.2s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-btn.active { background-color: #e11d48; color: white; }
     </style>
 </head>
-<body>
+<body class="text-slate-800">
 
-<nav>
-    <h2>TEXTIL CLOUD</h2>
-    <button onclick="ir('v')" id="m-v" class="active">🛒 VENTAS</button>
-    <button onclick="ir('s')" id="m-s">📦 STOCK</button>
-    <button onclick="ir('c')" id="m-c">👥 CLIENTES</button>
-    <button onclick="ir('x')" id="m-x">💰 CAJA</button>
-    <button onclick="ir('r')" id="m-r">📊 REPORTES</button>
+<nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <h1 class="font-black text-rose-500 text-xl tracking-tighter">TEXTIL<span class="text-white">CLOUD</span></h1>
+        <div class="flex gap-1 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+            <button onclick="ir('v', this)" class="nav-btn active px-4 py-2 rounded-lg text-sm font-bold transition-all">🛒 VENTAS</button>
+            <button onclick="ir('s', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">📦 STOCK</button>
+            <button onclick="ir('c', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">👥 CLIENTES</button>
+            <button onclick="ir('x', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">💰 CAJA</button>
+            <button onclick="loadDB()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-all">🔄 SINCRONIZAR</button>
+        </div>
+    </div>
 </nav>
 
-<main>
-    <div id="v" class="seccion activa">
-        <div class="card">
-            <h2>Nueva Venta</h2>
-            <div class="grid">
-                <input type="text" id="v-scan" placeholder="Escanear Cód. + Enter" onkeypress="if(event.key=='Enter') addCarro()">
-                <select id="v-pago"><option>EFECTIVO</option><option>TRANSFERENCIA</option><option>TARJETA</option><option>CUENTA CORRIENTE</option></select>
-                <select id="v-cli"></select>
+<main class="max-w-7xl mx-auto p-4 space-y-6">
+
+    <div id="v" class="seccion activa space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+            <h2 class="text-xl font-bold mb-4">Punto de Venta</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <input type="text" id="v-scan" class="p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500" placeholder="Escanear Código + Enter" onkeypress="if(event.key=='Enter') addCarro()">
+                <select id="v-pago" class="p-4 bg-slate-50 border rounded-xl font-semibold"></select>
+                <select id="v-cli" class="p-4 bg-slate-50 border rounded-xl font-semibold"></select>
             </div>
-            <table><thead><tr><th>Producto</th><th>Precio</th><th>Acción</th></tr></thead><tbody id="v-t"></tbody></table>
-            <h2 style="text-align:right">TOTAL: $<span id="v-tot">0</span></h2>
-            <button onclick="finalizarVenta()" class="btn btn-v">REGISTRAR Y TICKET</button>
+            <div class="overflow-x-auto min-h-[200px]">
+                <table class="w-full text-left">
+                    <thead class="text-slate-400 text-xs uppercase border-b">
+                        <tr><th class="p-3">Producto</th><th class="p-3">Precio</th><th class="p-3 text-center">Acción</th></tr>
+                    </thead>
+                    <tbody id="v-t" class="divide-y"></tbody>
+                </table>
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-center pt-6 border-t gap-4">
+                <div class="text-3xl font-black text-slate-900 uppercase">Total: $<span id="v-tot">0</span></div>
+                <button onclick="finalizarVenta()" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-4 rounded-2xl font-black shadow-lg transition-all transform hover:scale-105">REGISTRAR VENTA</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-500 uppercase tracking-widest text-sm">Ventas Recientes</h3>
+                <button onclick="exportarExcel('tabla-historial', 'Ventas')" class="text-emerald-600 font-bold text-sm">📥 Descargar Excel</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="tabla-historial" class="w-full text-sm">
+                    <thead><tr class="text-slate-400 border-b"><th class="p-2">Hora</th><th class="p-2">Concepto</th><th class="p-2">Medio</th><th class="p-2 text-right">Monto</th></tr></thead>
+                    <tbody id="v-historial" class="divide-y"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div id="s" class="seccion">
-        <div class="card">
-            <h2>Gestión de Inventario</h2>
-            <div class="grid">
-                <input type="hidden" id="s-key"> <input type="text" id="s-cod" placeholder="Código">
-                <input type="text" id="s-nom" placeholder="Prenda/Nombre">
-                <input type="number" id="s-can" placeholder="Stock">
-                <input type="number" id="s-cos" placeholder="Costo $">
-                <input type="number" id="s-pre" placeholder="Venta $">
+    <div id="s" class="seccion space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Inventario</h2>
+                <button onclick="exportarExcel('tabla-stock', 'Inventario')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">📥 EXCEL</button>
             </div>
-            <div style="display:flex; gap:10px">
-                <button onclick="pushStock()" id="btn-stock-save" class="btn btn-a" style="flex:2">GUARDAR / ACTUALIZAR</button>
-                <button onclick="limpiarInputs('s')" class="btn btn-r" style="flex:1">CANCELAR</button>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+                <input type="hidden" id="s-key">
+                <input type="text" id="s-cod" placeholder="Código" class="p-2 border rounded-lg shadow-sm">
+                <input type="text" id="s-nom" placeholder="Prenda" class="p-2 border rounded-lg shadow-sm">
+                <input type="number" id="s-can" placeholder="Cant." class="p-2 border rounded-lg shadow-sm">
+                <input type="number" id="s-pre" placeholder="Precio $" class="p-2 border rounded-lg shadow-sm">
+                <button onclick="pushStock()" class="col-span-2 md:col-span-1 bg-blue-600 text-white font-bold rounded-lg py-2">GUARDAR</button>
             </div>
-            <hr>
-            <input type="text" id="s-search" placeholder="🔍 Buscar por nombre o código..." oninput="render()" style="margin-top:20px">
-            <table><thead><tr><th>Cód</th><th>Prenda</th><th>Stock</th><th>Venta</th><th>Acciones</th></tr></thead><tbody id="s-t"></tbody></table>
+            <input type="text" id="s-search" oninput="render()" placeholder="🔍 Buscar por nombre o código..." class="w-full p-4 bg-slate-100 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-blue-400">
+            <div class="overflow-x-auto">
+                <table id="tabla-stock" class="w-full">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+                        <tr><th class="p-3">Código</th><th class="p-3">Prenda</th><th class="p-3 text-center">Stock</th><th class="p-3">Venta</th><th class="p-3 text-center">Edit</th></tr>
+                    </thead>
+                    <tbody id="s-t" class="divide-y"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div id="c" class="seccion"><div class="card"><h2>Clientes</h2><div class="grid"><input type="text" id="c-nom" placeholder="Nombre"><input type="text" id="c-dni" placeholder="DNI"><input type="number" id="c-lim" placeholder="Límite $"><select id="c-rec"><option>CON RECIBO</option><option>SIN RECIBO</option></select></div><button onclick="pushCli()" class="btn btn-a" style="width:100%">GUARDAR CLIENTE</button><table><thead><tr><th>Nombre</th><th>DNI</th><th>Deuda CC</th><th>Acción</th></tr></thead><tbody id="c-t"></tbody></table></div></div>
-    <div id="x" class="seccion"><div class="card" style="border-top: 5px solid var(--s)"><h2>Gastos</h2><div class="grid"><input type="text" id="x-con" placeholder="Motivo"><input type="number" id="x-mon" placeholder="Monto $"><button onclick="pushGasto()" class="btn btn-r">REGISTRAR GASTO</button></div><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Medio</th><th>Monto</th></tr></thead><tbody id="x-t"></tbody></table></div></div>
-    <div id="r" class="seccion"><div class="card"><h2>Reportes</h2><div class="grid"><input type="date" id="r-d"><input type="date" id="r-h"><button onclick="render()" class="btn btn-a">FILTRAR</button></div><div class="grid"><div class="card" style="background:var(--v); color:white"><h4>INGRESOS</h4><h2 id="ri">$0</h2></div><div class="card" style="background:var(--s); color:white"><h4>EGRESOS</h4><h2 id="re">$0</h2></div><div class="card" style="background:var(--a); color:white"><h4>NETO</h4><h2 id="rn">$0</h2></div></div></div></div>
+    <div id="c" class="seccion space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Cartera de Clientes</h2>
+                <button onclick="exportarExcel('tabla-clientes', 'Clientes')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">📥 EXCEL</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-6">
+                <input type="text" id="c-nom" placeholder="Nombre" class="p-2 border rounded-lg shadow-sm">
+                <input type="text" id="c-dni" placeholder="DNI" class="p-2 border rounded-lg shadow-sm">
+                <input type="number" id="c-lim" placeholder="Límite $" class="p-2 border rounded-lg shadow-sm">
+                <button onclick="pushCli()" class="bg-emerald-500 text-white font-bold rounded-lg py-2">REGISTRAR</button>
+            </div>
+            <input type="text" id="c-search" oninput="renderClientes()" placeholder="🔍 Buscar cliente por nombre o DNI..." class="w-full p-4 bg-slate-100 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-emerald-400">
+            <div id="c-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <table id="tabla-clientes" class="hidden"><thead><tr><th>Nombre</th><th>DNI</th><th>Saldo</th></tr></thead><tbody id="c-t-export"></tbody></table>
+        </div>
+    </div>
+
+    <div id="x" class="seccion space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-rose-600">Egresos / Gastos</h2>
+                <button onclick="exportarExcel('tabla-caja', 'Caja')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">📥 EXCEL</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input type="text" id="x-con" placeholder="Motivo del gasto" class="p-2 border rounded-lg">
+                <input type="number" id="x-mon" placeholder="Monto $" class="p-2 border rounded-lg">
+                <button onclick="pushGasto()" class="bg-rose-500 text-white font-bold rounded-lg">REGISTRAR GASTO</button>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+            <table id="tabla-caja" class="w-full text-sm">
+                <thead class="bg-slate-900 text-white"><tr><th class="p-3">Fecha</th><th class="p-3">Concepto</th><th class="p-3">Monto</th><th class="p-3">Tipo</th></tr></thead>
+                <tbody id="x-t" class="divide-y"></tbody>
+            </table>
+        </div>
+    </div>
+
 </main>
 
-<div id="status">Sincronizado Cloud ☁️</div>
+<div id="status" class="fixed bottom-4 right-4 bg-black/80 text-white text-[10px] px-3 py-1 rounded-full z-50">Sincronizado ☁️</div>
 
 <script>
     const DB_URL = "https://sofia-sistema-default-rtdb.firebaseio.com/"; 
     let db = { stock: {}, clientes: {}, caja: {} };
     let carro = [];
 
-    // --- SINCRONIZACIÓN ---
+    // --- NAVEGACIÓN ---
+    function ir(id, btn) {
+        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('activa');
+        btn.classList.add('active');
+    }
+
+    // --- NUBE ---
     async function syncDB(path, data) {
         document.getElementById('status').innerText = "Guardando...";
         await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) });
-        document.getElementById('status').innerText = "Sincronizado Cloud ☁️";
+        document.getElementById('status').innerText = "Sincronizado ☁️";
         loadDB();
     }
 
     async function loadDB() {
-        const res = await fetch(DB_URL + ".json");
-        const data = await res.json();
-        if(data) {
-            db.stock = data.stock || {};
-            db.clientes = data.clientes || {};
-            db.caja = data.caja || {};
-            render();
-        }
+        try {
+            document.getElementById('status').innerText = "Sincronizando...";
+            const res = await fetch(DB_URL + ".json");
+            const data = await res.json();
+            if(data) {
+                db.stock = data.stock || {};
+                db.clientes = data.clientes || {};
+                db.caja = data.caja || {};
+                render();
+            }
+            document.getElementById('status').innerText = "Sincronizado ☁️";
+        } catch (e) { alert("Error de conexión"); }
     }
 
-    // --- NAVEGACIÓN ---
-    function ir(id) {
-        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('activa');
-        document.getElementById('m-'+id).classList.add('active');
+    // --- EXCEL ---
+    function exportarExcel(idTabla, nombre) {
+        const table = document.getElementById(idTabla);
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `${nombre}_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    // --- OPCIÓN 1: LIMPIEZA DE FORMULARIOS ---
-    function limpiarInputs(prefijo) {
-        document.querySelectorAll(`input[id^="${prefijo}-"]`).forEach(i => i.value = '');
-        if(prefijo === 's') document.getElementById('s-key').value = '';
-    }
-
-    // --- OPCIÓN 2: GESTIÓN Y EDICIÓN DE STOCK ---
+    // --- LÓGICA STOCK ---
     async function pushStock() {
         let key = document.getElementById('s-key').value || "S" + Date.now();
         db.stock[key] = {
             cod: document.getElementById('s-cod').value,
             nom: document.getElementById('s-nom').value,
-            can: parseInt(document.getElementById('s-can').value),
-            cos: document.getElementById('s-cos').value,
+            can: parseInt(document.getElementById('s-can').value || 0),
             pre: document.getElementById('s-pre').value
         };
         await syncDB("stock", db.stock);
@@ -137,113 +198,81 @@
         document.getElementById('s-cod').value = p.cod;
         document.getElementById('s-nom').value = p.nom;
         document.getElementById('s-can').value = p.can;
-        document.getElementById('s-cos').value = p.cos;
         document.getElementById('s-pre').value = p.pre;
-        window.scrollTo(0,0);
+        ir('s', document.querySelector('[onclick*="ir(\'s\'"]'));
     }
 
-    // --- VENTAS Y CARRITO ---
+    // --- VENTAS ---
     function addCarro() {
         let cod = document.getElementById('v-scan').value;
-        let item = Object.values(db.stock).find(s => s.cod == cod);
+        let key = Object.keys(db.stock).find(k => db.stock[k].cod == cod);
+        let item = db.stock[key];
         if(item && item.can > 0) {
-            carro.push({...item});
+            carro.push({key, nom: item.nom, pre: item.pre});
             document.getElementById('v-scan').value = '';
             renderV();
-        } else { alert("Sin stock o producto no encontrado"); }
+        } else { alert("Producto sin stock o no encontrado"); }
     }
 
     function renderV() {
         let t = 0;
         document.getElementById('v-t').innerHTML = carro.map((i, idx) => {
             t += parseInt(i.pre);
-            return `<tr><td>${i.nom}</td><td>$${i.pre}</td><td><button onclick="carro.splice(${idx},1);renderV()">❌</button></td></tr>`;
+            return `<tr><td class="p-3 font-bold">${i.nom}</td><td class="p-3">$${i.pre}</td><td class="p-3 text-center"><button onclick="carro.splice(${idx},1);renderV()" class="text-rose-500 font-bold">✕</button></td></tr>`;
         }).join('');
-        document.getElementById('v-tot').innerText = t;
+        document.getElementById('v-tot').innerText = t.toLocaleString();
     }
 
-    // --- OPCIÓN 3: TICKET DE VENTA ---
     async function finalizarVenta() {
         if(carro.length == 0) return;
-        let tot = parseInt(document.getElementById('v-tot').innerText);
+        let tot = parseInt(document.getElementById('v-tot').innerText.replace(/\D/g,''));
         let met = document.getElementById('v-pago').value;
         let cliId = document.getElementById('v-cli').value;
 
-        // Descontar Stock
-        carro.forEach(c => {
-            let key = Object.keys(db.stock).find(k => db.stock[k].cod == c.cod);
-            if(db.stock[key]) db.stock[key].can--;
-        });
-
+        carro.forEach(c => { if(db.stock[c.key]) db.stock[c.key].can--; });
         if(met == "CUENTA CORRIENTE" && cliId != "null") {
             db.clientes[cliId].saldo = (db.clientes[cliId].saldo || 0) + tot;
         }
 
         let idCaja = "C" + Date.now();
-        db.caja[idCaja] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "Venta: "+met, v: tot, tp: "ING", m: met };
+        db.caja[idCaja] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}), c: "Venta: " + (carro.length > 1 ? carro[0].nom + "..." : carro[0].nom), v: tot, tp: "ING", m: met };
 
-        // Generar Ticket (Ventana emergente)
-        let ticketWin = window.open('', '_blank', 'width=300,height=600');
-        ticketWin.document.write(`
-            <style>body{font-family:monospace; font-size:12px; padding:20px; width:200px}</style>
-            <center><b>TEXTIL CLOUD</b><br>Fecha: ${new Date().toLocaleDateString()}</center><br>
-            --------------------------<br>
-            ${carro.map(i => `${i.nom.substring(0,15)}... $${i.pre}`).join('<br>')}
-            <br>--------------------------<br>
-            <b>TOTAL: $${tot}</b><br>
-            Pago: ${met}<br><br>
-            <center>Gracias por su compra!</center>
-            <script>window.print(); window.close();<\/script>
-        `);
-
-        carro = []; 
+        carro = [];
         renderV();
         await syncDB("", db);
+        alert("Venta procesada con éxito");
     }
 
-    // --- RENDERIZADO GENERAL ---
-    function render() {
-        // Clientes Select
-        document.getElementById('v-cli').innerHTML = '<option value="null">Mostrador</option>' + 
-            Object.entries(db.clientes).map(([k,v]) => `<option value="${k}">${v.nom}</option>`).join('');
-        
-        // Stock con BUSCADOR
-        let search = document.getElementById('s-search').value.toLowerCase();
-        document.getElementById('s-t').innerHTML = Object.entries(db.stock)
-            .filter(([k,s]) => s.nom.toLowerCase().includes(search) || s.cod.includes(search))
-            .map(([k,s]) => `<tr><td>${s.cod}</td><td>${s.nom}</td><td><b>${s.can}</b></td><td>$${s.pre}</td><td><button class="btn btn-edit" onclick="editarProducto('${k}')">✏️</button></td></tr>`).join('');
-
-        // Clientes
-        document.getElementById('c-t').innerHTML = Object.entries(db.clientes).map(([k,v]) => `<tr><td>${v.nom}</td><td>${v.dni}</td><td style="color:red">$${v.saldo || 0}</td><td><button onclick="cobrar('${k}')">💸 Cobrar</button></td></tr>`).join('');
-
-        // Caja y Reportes
-        let d = document.getElementById('r-d').value;
-        let h = document.getElementById('r-h').value;
-        let si = 0, se = 0, htmlX = "";
-        Object.values(db.caja).reverse().forEach(x => {
-            if((!d || x.f >= d) && (!h || x.f <= h)) {
-                if(x.tp == "ING") si += x.v; else se += x.v;
-                htmlX += `<tr><td>${x.f}</td><td>${x.c}</td><td>${x.m}</td><td>$${x.v}</td></tr>`;
-            }
-        });
-        document.getElementById('x-t').innerHTML = htmlX;
-        document.getElementById('ri').innerText = "$"+si;
-        document.getElementById('re').innerText = "$"+se;
-        document.getElementById('rn').innerText = "$"+(si-se);
-    }
-
+    // --- CLIENTES ---
     async function pushCli() {
         let id = "L" + Date.now();
-        db.clientes[id] = { nom: document.getElementById('c-nom').value, dni: document.getElementById('c-dni').value, lim: document.getElementById('c-lim').value, rec: document.getElementById('c-rec').value, saldo: 0 };
+        db.clientes[id] = { nom: document.getElementById('c-nom').value, dni: document.getElementById('c-dni').value, saldo: 0 };
         await syncDB("clientes", db.clientes);
         limpiarInputs('c');
     }
 
-    async function pushGasto() {
-        let id = "X" + Date.now();
-        db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "GASTO: " + document.getElementById('x-con').value, v: parseInt(document.getElementById('x-mon').value), tp: "EGR", m: "EFECTIVO" };
-        await syncDB("caja", db.caja);
-        limpiarInputs('x');
+    function renderClientes() {
+        const search = document.getElementById('c-search').value.toLowerCase();
+        const html = Object.entries(db.clientes)
+            .filter(([k,v]) => v.nom.toLowerCase().includes(search) || v.dni.includes(search))
+            .map(([k,v]) => `
+                <div class="bg-white p-5 rounded-2xl border shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full ${v.saldo > 0 ? 'bg-rose-500' : 'bg-emerald-500'}"></div>
+                    <h3 class="font-black text-slate-800 uppercase text-sm">${v.nom}</h3>
+                    <p class="text-xs text-slate-400 mb-4 font-mono">DNI: ${v.dni}</p>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Deuda Actual</p>
+                            <p class="text-xl font-black ${v.saldo > 0 ? 'text-rose-600' : 'text-emerald-600'}">$${v.saldo || 0}</p>
+                        </div>
+                        <button onclick="cobrar('${k}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-600 transition-colors">💸 COBRAR</button>
+                    </div>
+                </div>
+            `).join('');
+        document.getElementById('c-list').innerHTML = html;
+        
+        // Para exportación oculta
+        document.getElementById('c-t-export').innerHTML = Object.values(db.clientes).map(v => `<tr><td>${v.nom}</td><td>${v.dni}</td><td>${v.saldo}</td></tr>`).join('');
     }
 
     async function cobrar(k) {
@@ -254,6 +283,52 @@
             db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "Cobro: "+db.clientes[k].nom, v: m, tp: "ING", m: "EFECTIVO" };
             await syncDB("", db);
         }
+    }
+
+    // --- CAJA ---
+    async function pushGasto() {
+        let id = "X" + Date.now();
+        db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "GASTO: " + document.getElementById('x-con').value, v: parseInt(document.getElementById('x-mon').value), tp: "EGR", m: "EFECTIVO" };
+        await syncDB("caja", db.caja);
+        limpiarInputs('x');
+    }
+
+    // --- RENDER GENERAL ---
+    function render() {
+        // Medios de Pago
+        const medios = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"];
+        document.getElementById('v-pago').innerHTML = medios.map(m => `<option>${m}</option>`).join('');
+
+        // Clientes Select
+        document.getElementById('v-cli').innerHTML = '<option value="null">Consumidor Final</option>' + 
+            Object.entries(db.clientes).map(([k,v]) => `<option value="${k}">${v.nom}</option>`).join('');
+
+        // Stock con buscador
+        let searchS = document.getElementById('s-search').value.toLowerCase();
+        document.getElementById('s-t').innerHTML = Object.entries(db.stock)
+            .filter(([k,s]) => s.nom.toLowerCase().includes(searchS) || s.cod.includes(searchS))
+            .map(([k,s]) => `<tr><td class="p-3 text-xs font-mono">${s.cod}</td><td class="p-3 font-bold">${s.nom}</td><td class="p-3 text-center"><span class="px-2 py-1 rounded bg-slate-100 font-bold">${s.can}</span></td><td class="p-3 font-bold text-rose-600">$${s.pre}</td><td class="p-3 text-center"><button onclick="editarProducto('${k}')">✏️</button></td></tr>`).join('');
+
+        // Historial Ventas (Caja Ingresos del día)
+        let hoy = new Date().toISOString().split('T')[0];
+        let historialHTML = "";
+        let cajaHTML = "";
+        
+        Object.values(db.caja).reverse().forEach(x => {
+            let fila = `<tr><td class="p-2">${x.t}</td><td class="p-2">${x.c}</td><td class="p-2 font-bold">${x.m || '---'}</td><td class="p-2 text-right font-black">$${x.v}</td></tr>`;
+            if(x.f === hoy && x.tp === "ING") historialHTML += fila;
+            cajaHTML += `<tr><td class="p-3">${x.f}</td><td class="p-3">${x.c}</td><td class="p-3 font-bold">$${x.v}</td><td class="p-3 uppercase text-xs font-black ${x.tp=='ING'?'text-emerald-500':'text-rose-500'}">${x.tp}</td></tr>`;
+        });
+        
+        document.getElementById('v-historial').innerHTML = historialHTML || '<tr><td colspan="4" class="text-center p-4 text-slate-400 italic">No hay ventas registradas hoy</td></tr>';
+        document.getElementById('x-t').innerHTML = cajaHTML;
+
+        renderClientes();
+    }
+
+    function limpiarInputs(p) {
+        document.querySelectorAll(`input[id^="${p}-"]`).forEach(i => i.value = '');
+        if(p === 's') document.getElementById('s-key').value = '';
     }
 
     loadDB();
