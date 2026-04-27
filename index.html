@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISTEMA TEXTIL CLOUD PRO - 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #0f172a; --accent: #e11d48; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
         .seccion { display: none; }
         .seccion.activa { display: block; animation: fadeIn 0.2s ease-in; }
@@ -19,13 +18,13 @@
 
 <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 class="font-black text-rose-500 text-xl tracking-tighter">TEXTIL<span class="text-white">CLOUD</span></h1>
+        <h1 class="font-black text-rose-500 text-xl tracking-tighter uppercase">Textil<span class="text-white">Cloud</span></h1>
         <div class="flex gap-1 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
             <button onclick="ir('v', this)" class="nav-btn active px-4 py-2 rounded-lg text-sm font-bold transition-all">🛒 VENTAS</button>
             <button onclick="ir('s', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">📦 STOCK</button>
             <button onclick="ir('c', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">👥 CLIENTES</button>
             <button onclick="ir('x', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">💰 CAJA</button>
-            <button onclick="loadDB()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-all">🔄 SINCRONIZAR</button>
+            <button onclick="loadDB()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-all">🔄 SYNC</button>
         </div>
     </div>
 </nav>
@@ -34,303 +33,297 @@
 
     <div id="v" class="seccion activa space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <h2 class="text-xl font-bold mb-4">Punto de Venta</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <input type="text" id="v-scan" class="p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500" placeholder="Escanear Código + Enter" onkeypress="if(event.key=='Enter') addCarro()">
-                <select id="v-pago" class="p-4 bg-slate-50 border rounded-xl font-semibold"></select>
-                <select id="v-cli" class="p-4 bg-slate-50 border rounded-xl font-semibold"></select>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+                <div class="md:col-span-6 flex gap-2">
+                    <input type="text" id="v-scan" class="flex-1 p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 font-bold text-lg" placeholder="Código + Enter" onkeypress="if(event.key=='Enter') addCarro()">
+                    <input type="number" id="v-cant-v" value="1" min="1" class="w-24 p-4 bg-rose-50 border-2 border-rose-100 rounded-xl outline-none font-bold text-center text-rose-600" title="Cantidad">
+                </div>
+                <div class="md:col-span-3 flex flex-col gap-2">
+                    <select id="v-pago" onchange="toggleDetallePago()" class="p-4 bg-slate-50 border rounded-xl font-bold outline-none"></select>
+                    <select id="v-pago-detalle" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl font-medium text-sm outline-none"></select>
+                </div>
+                <select id="v-cli" class="md:col-span-3 p-4 bg-slate-50 border rounded-xl font-bold outline-none"></select>
             </div>
-            <div class="overflow-x-auto min-h-[200px]">
+            <div class="overflow-x-auto min-h-[150px] mb-4">
                 <table class="w-full text-left">
-                    <thead class="text-slate-400 text-xs uppercase border-b">
-                        <tr><th class="p-3">Producto</th><th class="p-3">Precio</th><th class="p-3 text-center">Acción</th></tr>
+                    <thead class="text-[10px] uppercase text-slate-400 border-b">
+                        <tr><th class="pb-2">Producto</th><th class="pb-2">Cant.</th><th class="pb-2">P. Unit</th><th class="pb-2">Subtotal</th><th class="pb-2 text-right">Quitar</th></tr>
                     </thead>
-                    <tbody id="v-t" class="divide-y"></tbody>
+                    <tbody id="v-t" class="divide-y font-bold"></tbody>
                 </table>
             </div>
             <div class="flex flex-col md:flex-row justify-between items-center pt-6 border-t gap-4">
-                <div class="text-3xl font-black text-slate-900 uppercase">Total: $<span id="v-tot">0</span></div>
-                <button onclick="finalizarVenta()" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-4 rounded-2xl font-black shadow-lg transition-all transform hover:scale-105">REGISTRAR VENTA</button>
+                <div class="text-4xl font-black text-slate-900 uppercase">Total: $<span id="v-tot">0</span></div>
+                <button onclick="finalizarVenta()" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-5 rounded-2xl font-black shadow-lg uppercase text-lg">Registrar Venta</button>
             </div>
         </div>
-
         <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-500 uppercase tracking-widest text-sm">Ventas Recientes</h3>
-                <button onclick="exportarExcel('tabla-historial', 'Ventas')" class="text-emerald-600 font-bold text-sm">📥 Descargar Excel</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table id="tabla-historial" class="w-full text-sm">
-                    <thead><tr class="text-slate-400 border-b"><th class="p-2">Hora</th><th class="p-2">Concepto</th><th class="p-2">Medio</th><th class="p-2 text-right">Monto</th></tr></thead>
-                    <tbody id="v-historial" class="divide-y"></tbody>
-                </table>
-            </div>
+            <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">Ventas Realizadas (Hoy)</h3>
+            <div class="overflow-x-auto"><table class="w-full text-left">
+                <thead class="text-[10px] uppercase text-slate-400 border-b"><tr><th class="pb-2">Hora</th><th class="pb-2">Cliente</th><th class="pb-2">Detalle</th><th class="pb-2">Pago</th><th class="pb-2 text-right">Monto</th></tr></thead>
+                <tbody id="v-historial" class="divide-y"></tbody>
+            </table></div>
         </div>
     </div>
 
     <div id="s" class="seccion space-y-4">
         <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Inventario</h2>
-                <button onclick="exportarExcel('tabla-stock', 'Inventario')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">📥 EXCEL</button>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 uppercase">Inventario y Rentabilidad</h2>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
                 <input type="hidden" id="s-key">
-                <input type="text" id="s-cod" placeholder="Código" class="p-2 border rounded-lg shadow-sm">
-                <input type="text" id="s-nom" placeholder="Prenda" class="p-2 border rounded-lg shadow-sm">
-                <input type="number" id="s-can" placeholder="Cant." class="p-2 border rounded-lg shadow-sm">
-                <input type="number" id="s-pre" placeholder="Precio $" class="p-2 border rounded-lg shadow-sm">
-                <button onclick="pushStock()" class="col-span-2 md:col-span-1 bg-blue-600 text-white font-bold rounded-lg py-2">GUARDAR</button>
+                <input type="text" id="s-cod" placeholder="Código" class="p-2 border rounded-lg uppercase font-mono text-xs">
+                <input type="text" id="s-nom" placeholder="Prenda" class="p-2 border rounded-lg text-xs">
+                <input type="number" id="s-can" placeholder="Stock" class="p-2 border rounded-lg text-xs">
+                <input type="number" id="s-cos" placeholder="Costo $" class="p-2 border border-blue-200 bg-blue-50 rounded-lg text-xs font-bold">
+                <input type="number" id="s-pre" placeholder="Venta $" class="p-2 border border-emerald-200 bg-emerald-50 rounded-lg text-xs font-bold">
+                <button onclick="pushStock()" class="col-span-2 md:col-span-1 bg-blue-600 text-white font-black rounded-lg py-2 uppercase text-[10px]">Guardar</button>
             </div>
-            <input type="text" id="s-search" oninput="render()" placeholder="🔍 Buscar por nombre o código..." class="w-full p-4 bg-slate-100 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-blue-400">
-            <div class="overflow-x-auto">
-                <table id="tabla-stock" class="w-full">
-                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
-                        <tr><th class="p-3">Código</th><th class="p-3">Prenda</th><th class="p-3 text-center">Stock</th><th class="p-3">Venta</th><th class="p-3 text-center">Edit</th></tr>
-                    </thead>
-                    <tbody id="s-t" class="divide-y"></tbody>
-                </table>
-            </div>
+            <input type="text" id="s-search" oninput="renderStock()" placeholder="🔍 Buscar producto..." class="w-full p-4 bg-slate-100 rounded-xl mb-4 outline-none">
+            <div class="overflow-x-auto"><table class="w-full text-left">
+                <thead class="text-[10px] uppercase text-slate-400 border-b"><tr><th class="p-3">Código</th><th class="p-3">Producto</th><th class="p-3 text-center">Cant.</th><th class="p-3">Costo</th><th class="p-3">Venta</th><th class="p-3">Rent %</th><th class="p-3 text-right">Acción</th></tr></thead>
+                <tbody id="s-t" class="divide-y"></tbody>
+            </table></div>
         </div>
     </div>
 
     <div id="c" class="seccion space-y-4">
         <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Cartera de Clientes</h2>
-                <button onclick="exportarExcel('tabla-clientes', 'Clientes')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">📥 EXCEL</button>
+            <h2 class="text-xl font-bold mb-4 text-emerald-600 uppercase">Gestión de Clientes</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                <input type="hidden" id="c-key">
+                <input type="text" id="c-nom" placeholder="Nombre Completo" class="p-3 border rounded-xl">
+                <input type="text" id="c-dni" placeholder="DNI" class="p-3 border rounded-xl">
+                <input type="text" id="c-cel" placeholder="Celular" class="p-3 border rounded-xl">
+                <input type="text" id="c-dir" placeholder="Dirección" class="p-3 border rounded-xl">
+                <select id="c-rec" class="p-3 border rounded-xl font-semibold"><option value="NO">SIN RECIBO</option><option value="SI">CON RECIBO</option></select>
+                <button onclick="pushCli()" class="lg:col-span-5 bg-emerald-500 text-white font-black rounded-xl py-3 uppercase">Guardar Cliente</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-6">
-                <input type="text" id="c-nom" placeholder="Nombre" class="p-2 border rounded-lg shadow-sm">
-                <input type="text" id="c-dni" placeholder="DNI" class="p-2 border rounded-lg shadow-sm">
-                <input type="number" id="c-lim" placeholder="Límite $" class="p-2 border rounded-lg shadow-sm">
-                <button onclick="pushCli()" class="bg-emerald-500 text-white font-bold rounded-lg py-2">REGISTRAR</button>
-            </div>
-            <input type="text" id="c-search" oninput="renderClientes()" placeholder="🔍 Buscar cliente por nombre o DNI..." class="w-full p-4 bg-slate-100 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-emerald-400">
+            <input type="text" id="c-search" oninput="renderClientes()" placeholder="🔍 Buscar cliente..." class="w-full p-4 bg-slate-100 rounded-xl mb-6 outline-none">
             <div id="c-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            <table id="tabla-clientes" class="hidden"><thead><tr><th>Nombre</th><th>DNI</th><th>Saldo</th></tr></thead><tbody id="c-t-export"></tbody></table>
         </div>
     </div>
 
     <div id="x" class="seccion space-y-4">
-        <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-rose-600">Egresos / Gastos</h2>
-                <button onclick="exportarExcel('tabla-caja', 'Caja')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">📥 EXCEL</button>
+        <div id="resumen-caja" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        <div class="bg-white rounded-2xl border p-6 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border mb-4">
+                <input type="date" id="x-desde" onchange="renderCaja()" class="p-2 border rounded-lg text-xs">
+                <input type="date" id="x-hasta" onchange="renderCaja()" class="p-2 border rounded-lg text-xs">
+                <select id="x-filtro-medio" onchange="renderCaja()" class="p-2 border rounded-lg text-xs font-bold"><option value="TODOS">TODOS LOS PAGOS</option><option value="EFECTIVO">EFECTIVO</option><option value="TRANSFERENCIA">TRANSFERENCIA</option><option value="TARJETA">TARJETA</option></select>
+                <input type="text" id="x-search" oninput="renderCaja()" placeholder="🔍 Buscar concepto..." class="md:col-span-1 p-2 border rounded-lg text-xs">
+                <button onclick="toggleOrden()" id="btn-orden" class="bg-slate-900 text-white text-[10px] font-bold rounded-lg px-2">RECIENTES ↓</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input type="text" id="x-con" placeholder="Motivo del gasto" class="p-2 border rounded-lg">
-                <input type="number" id="x-mon" placeholder="Monto $" class="p-2 border rounded-lg">
-                <button onclick="pushGasto()" class="bg-rose-500 text-white font-bold rounded-lg">REGISTRAR GASTO</button>
-            </div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-            <table id="tabla-caja" class="w-full text-sm">
-                <thead class="bg-slate-900 text-white"><tr><th class="p-3">Fecha</th><th class="p-3">Concepto</th><th class="p-3">Monto</th><th class="p-3">Tipo</th></tr></thead>
-                <tbody id="x-t" class="divide-y"></tbody>
-            </table>
+            <div class="overflow-x-auto"><table class="w-full text-sm text-left">
+                <thead class="text-[10px] uppercase text-slate-400 border-b">
+                    <tr><th class="p-4">Fecha/Hora</th><th class="p-4">Cliente</th><th class="p-4">Concepto</th><th class="p-4">Medio</th><th class="p-4 text-right">Monto</th><th class="p-4 text-right">Eliminar</th></tr>
+                </thead>
+                <tbody id="x-t" class="divide-y font-bold"></tbody>
+            </table></div>
         </div>
     </div>
-
 </main>
 
-<div id="status" class="fixed bottom-4 right-4 bg-black/80 text-white text-[10px] px-3 py-1 rounded-full z-50">Sincronizado ☁️</div>
+<div id="modal-cliente" class="fixed inset-0 bg-black/70 hidden z-[100] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl">
+        <div class="p-6 border-b bg-slate-50 relative">
+            <h2 id="ficha-nom" class="text-2xl font-black uppercase text-slate-900"></h2>
+            <div id="ficha-datos" class="flex flex-wrap gap-4 mt-2 text-[10px] font-bold text-slate-500 uppercase"></div>
+            <button onclick="cerrarFicha()" class="absolute top-4 right-4 text-2xl font-bold p-2">&times;</button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
+                <div><p class="text-[9px] font-bold text-slate-400 uppercase">Saldo Deudor</p><p id="ficha-saldo" class="text-3xl font-black text-rose-600"></p></div>
+                <div class="flex flex-col gap-2 w-full md:w-auto">
+                    <select id="ficha-metodo-pago" class="p-2 border rounded-lg font-bold text-[11px] bg-slate-50"><option value="EFECTIVO">💸 EFECTIVO</option><option value="TRANSFERENCIA">📲 TRANSFERENCIA</option><option value="TARJETA">💳 TARJETA</option></select>
+                    <button onclick="cobrarFicha()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[11px]">Registrar Cobro</button>
+                </div>
+            </div>
+            <div class="max-h-60 overflow-y-auto"><table class="w-full text-xs font-bold"><tbody id="ficha-movimientos" class="divide-y"></tbody></table></div>
+        </div>
+    </div>
+</div>
 
 <script>
     const DB_URL = "https://sofia-sistema-default-rtdb.firebaseio.com/"; 
     let db = { stock: {}, clientes: {}, caja: {} };
     let carro = [];
+    let ordenAsc = false;
+    let clienteActualKey = null;
 
-    // --- NAVEGACIÓN ---
-    function ir(id, btn) {
-        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('activa');
-        btn.classList.add('active');
-    }
-
-    // --- NUBE ---
-    async function syncDB(path, data) {
-        document.getElementById('status').innerText = "Guardando...";
-        await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) });
-        document.getElementById('status').innerText = "Sincronizado ☁️";
-        loadDB();
-    }
-
-    async function loadDB() {
-        try {
-            document.getElementById('status').innerText = "Sincronizando...";
-            const res = await fetch(DB_URL + ".json");
-            const data = await res.json();
-            if(data) {
-                db.stock = data.stock || {};
-                db.clientes = data.clientes || {};
-                db.caja = data.caja || {};
-                render();
-            }
-            document.getElementById('status').innerText = "Sincronizado ☁️";
-        } catch (e) { alert("Error de conexión"); }
-    }
-
-    // --- EXCEL ---
-    function exportarExcel(idTabla, nombre) {
-        const table = document.getElementById(idTabla);
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `${nombre}_${new Date().toLocaleDateString()}.xlsx`);
-    }
-
-    // --- LÓGICA STOCK ---
-    async function pushStock() {
-        let key = document.getElementById('s-key').value || "S" + Date.now();
-        db.stock[key] = {
-            cod: document.getElementById('s-cod').value,
-            nom: document.getElementById('s-nom').value,
-            can: parseInt(document.getElementById('s-can').value || 0),
-            pre: document.getElementById('s-pre').value
-        };
-        await syncDB("stock", db.stock);
-        limpiarInputs('s');
-    }
-
-    function editarProducto(key) {
-        let p = db.stock[key];
-        document.getElementById('s-key').value = key;
-        document.getElementById('s-cod').value = p.cod;
-        document.getElementById('s-nom').value = p.nom;
-        document.getElementById('s-can').value = p.can;
-        document.getElementById('s-pre').value = p.pre;
-        ir('s', document.querySelector('[onclick*="ir(\'s\'"]'));
-    }
+    async function syncDB(path, data) { await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) }); loadDB(); }
+    async function loadDB() { try { const res = await fetch(DB_URL + ".json"); const data = await res.json(); if(data) { db.stock = data.stock || {}; db.clientes = data.clientes || {}; db.caja = data.caja || {}; render(); } } catch (e) { console.error(e); } }
+    function render() { renderVUI(); renderStock(); renderClientes(); renderCaja(); }
 
     // --- VENTAS ---
     function addCarro() {
-        let cod = document.getElementById('v-scan').value;
-        let key = Object.keys(db.stock).find(k => db.stock[k].cod == cod);
-        let item = db.stock[key];
-        if(item && item.can > 0) {
-            carro.push({key, nom: item.nom, pre: item.pre});
-            document.getElementById('v-scan').value = '';
-            renderV();
-        } else { alert("Producto sin stock o no encontrado"); }
+        let cod = document.getElementById('v-scan').value.toUpperCase();
+        let cant = parseInt(document.getElementById('v-cant-v').value) || 1;
+        let k = Object.keys(db.stock).find(key => db.stock[key].cod == cod);
+        if(k) {
+            if(db.stock[k].can >= cant) {
+                carro.push({ k, nom: db.stock[k].nom, pre: db.stock[k].pre, cant: cant });
+                document.getElementById('v-scan').value = '';
+                document.getElementById('v-cant-v').value = '1';
+                renderV();
+            } else { alert("Stock insuficiente. Solo quedan: " + db.stock[k].can); }
+        }
     }
-
     function renderV() {
         let t = 0;
         document.getElementById('v-t').innerHTML = carro.map((i, idx) => {
-            t += parseInt(i.pre);
-            return `<tr><td class="p-3 font-bold">${i.nom}</td><td class="p-3">$${i.pre}</td><td class="p-3 text-center"><button onclick="carro.splice(${idx},1);renderV()" class="text-rose-500 font-bold">✕</button></td></tr>`;
+            let sub = i.pre * i.cant; t += sub;
+            return `<tr class="uppercase text-xs"><td class="py-3">${i.nom}</td><td>${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>`;
         }).join('');
-        document.getElementById('v-tot').innerText = t.toLocaleString();
+        document.getElementById('v-tot').innerText = t;
+    }
+    async function finalizarVenta() {
+        if(!carro.length) return;
+        let tot = parseInt(document.getElementById('v-tot').innerText);
+        let met = document.getElementById('v-pago').value;
+        let det = document.getElementById('v-pago-detalle').value;
+        let cliKey = document.getElementById('v-cli').value;
+        let mF = (met == 'TRANSFERENCIA' || met == 'TARJETA') ? `${met} (${det})` : met;
+        
+        // Copia del carro para guardar el detalle técnico y poder revertir stock luego si se elimina
+        let detalleProductos = carro.map(c => ({ k: c.k, nom: c.nom, cant: c.cant }));
+
+        carro.forEach(c => { if(db.stock[c.k]) db.stock[c.k].can -= c.cant; });
+        let nomCli = (cliKey != "null") ? db.clientes[cliKey].nom : "C. FINAL";
+        
+        if(met == "CUENTA CORRIENTE" && cliKey != "null") { db.clientes[cliKey].saldo = (db.clientes[cliKey].saldo || 0) + tot; }
+        
+        let ahora = new Date();
+        db.caja["C"+Date.now()] = { 
+            f: ahora.toISOString().split('T')[0], 
+            h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+            c: `VENTA: ${carro.map(c => c.nom).join(', ')}`, 
+            cli: nomCli,
+            cliKey: cliKey, // Guardamos la key para revertir saldo si se elimina
+            v: tot, 
+            tp: "ING", 
+            m: mF,
+            items: detalleProductos // Guardamos los items para revertir stock
+        };
+        carro = []; renderV(); await syncDB("", db);
     }
 
-    async function finalizarVenta() {
-        if(carro.length == 0) return;
-        let tot = parseInt(document.getElementById('v-tot').innerText.replace(/\D/g,''));
-        let met = document.getElementById('v-pago').value;
-        let cliId = document.getElementById('v-cli').value;
-
-        carro.forEach(c => { if(db.stock[c.key]) db.stock[c.key].can--; });
-        if(met == "CUENTA CORRIENTE" && cliId != "null") {
-            db.clientes[cliId].saldo = (db.clientes[cliId].saldo || 0) + tot;
+    // --- ELIMINAR VENTA (LOGICA DE REVERSION) ---
+    async function eliminarMovimiento(id) {
+        if(!confirm("¿Estás seguro de eliminar esta operación? Se revertirá el stock y los saldos de clientes.")) return;
+        
+        const mov = db.caja[id];
+        
+        // 1. Revertir Stock si era una venta
+        if(mov.items && mov.items.length > 0) {
+            mov.items.forEach(item => {
+                if(db.stock[item.k]) db.stock[item.k].can += item.cant;
+            });
         }
 
-        let idCaja = "C" + Date.now();
-        db.caja[idCaja] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}), c: "Venta: " + (carro.length > 1 ? carro[0].nom + "..." : carro[0].nom), v: tot, tp: "ING", m: met };
+        // 2. Revertir Saldo de Cliente si era Cuenta Corriente o Pago
+        if(mov.m === "CUENTA CORRIENTE" && mov.cliKey !== "null") {
+            if(db.clientes[mov.cliKey]) db.clientes[mov.cliKey].saldo -= mov.v;
+        }
+        
+        // 3. Si era un PAGO RECIBIDO en la ficha, devolvemos la deuda al cliente
+        if(mov.c.includes("PAGO RECIBIDO") && mov.cliKey) {
+            if(db.clientes[mov.cliKey]) db.clientes[mov.cliKey].saldo += mov.v;
+        }
 
-        carro = [];
-        renderV();
+        delete db.caja[id];
         await syncDB("", db);
-        alert("Venta procesada con éxito");
     }
+
+    // --- STOCK ---
+    async function pushStock() {
+        const k = document.getElementById('s-key').value || "S" + Date.now();
+        db.stock[k] = { cod: document.getElementById('s-cod').value.toUpperCase(), nom: document.getElementById('s-nom').value.toUpperCase(), can: parseInt(document.getElementById('s-can').value) || 0, cos: parseFloat(document.getElementById('s-cos').value) || 0, pre: parseFloat(document.getElementById('s-pre').value) || 0 };
+        await syncDB("stock", db.stock); document.getElementById('s-key').value = ""; limpiarInputs('s');
+    }
+    function renderStock() {
+        let ss = document.getElementById('s-search').value.toLowerCase();
+        document.getElementById('s-t').innerHTML = Object.entries(db.stock).filter(([k,s]) => s.nom.toLowerCase().includes(ss) || s.cod.toLowerCase().includes(ss)).map(([k,s]) => {
+            let rent = s.pre > 0 ? ((s.pre - s.cos) / s.pre) * 100 : 0;
+            return `<tr class="uppercase text-[11px] font-bold"><td class="p-3 text-rose-500 font-mono">${s.cod}</td><td class="p-3">${s.nom}</td><td class="p-3 text-center">${s.can}</td><td class="p-3 text-slate-400">$${s.cos}</td><td class="p-3 text-emerald-600 font-black">$${s.pre}</td><td class="p-3 font-black">${rent.toFixed(1)}%</td><td class="p-3 text-right flex justify-end gap-3"><button onclick="editarStock('${k}')">✏️</button><button onclick="elimStock('${k}')">✕</button></td></tr>`;
+        }).join('');
+    }
+    function editarStock(k) { let s = db.stock[k]; document.getElementById('s-key').value = k; document.getElementById('s-cod').value = s.cod; document.getElementById('s-nom').value = s.nom; document.getElementById('s-can').value = s.can; document.getElementById('s-cos').value = s.cos; document.getElementById('s-pre').value = s.pre; window.scrollTo(0,0); }
+    async function elimStock(k) { if(confirm("¿Eliminar?")) { delete db.stock[k]; await syncDB("stock", db.stock); } }
 
     // --- CLIENTES ---
     async function pushCli() {
-        let id = "L" + Date.now();
-        db.clientes[id] = { nom: document.getElementById('c-nom').value, dni: document.getElementById('c-dni').value, saldo: 0 };
-        await syncDB("clientes", db.clientes);
-        limpiarInputs('c');
+        const k = document.getElementById('c-key').value || "L" + Date.now();
+        db.clientes[k] = { nom: document.getElementById('c-nom').value.toUpperCase(), dni: document.getElementById('c-dni').value, cel: document.getElementById('c-cel').value, dir: document.getElementById('c-dir').value, rec: document.getElementById('c-rec').value, saldo: db.clientes[k] ? db.clientes[k].saldo : 0 };
+        await syncDB("clientes", db.clientes); document.getElementById('c-key').value = ""; limpiarInputs('c');
     }
-
     function renderClientes() {
-        const search = document.getElementById('c-search').value.toLowerCase();
-        const html = Object.entries(db.clientes)
-            .filter(([k,v]) => v.nom.toLowerCase().includes(search) || v.dni.includes(search))
-            .map(([k,v]) => `
-                <div class="bg-white p-5 rounded-2xl border shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full ${v.saldo > 0 ? 'bg-rose-500' : 'bg-emerald-500'}"></div>
-                    <h3 class="font-black text-slate-800 uppercase text-sm">${v.nom}</h3>
-                    <p class="text-xs text-slate-400 mb-4 font-mono">DNI: ${v.dni}</p>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Deuda Actual</p>
-                            <p class="text-xl font-black ${v.saldo > 0 ? 'text-rose-600' : 'text-emerald-600'}">$${v.saldo || 0}</p>
-                        </div>
-                        <button onclick="cobrar('${k}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-600 transition-colors">💸 COBRAR</button>
-                    </div>
-                </div>
-            `).join('');
-        document.getElementById('c-list').innerHTML = html;
-        
-        // Para exportación oculta
-        document.getElementById('c-t-export').innerHTML = Object.values(db.clientes).map(v => `<tr><td>${v.nom}</td><td>${v.dni}</td><td>${v.saldo}</td></tr>`).join('');
+        const txt = document.getElementById('c-search').value.toLowerCase();
+        document.getElementById('c-list').innerHTML = Object.entries(db.clientes).filter(([k,v]) => v.nom.toLowerCase().includes(txt)).map(([k,v]) => `
+            <div class="bg-white p-5 rounded-2xl border shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full ${v.saldo > 0 ? 'bg-rose-500' : 'bg-emerald-500'}"></div>
+                <div class="flex justify-between items-start mb-3"><h3 class="font-black text-xs uppercase">${v.nom}</h3><div class="flex gap-4"><button onclick="editarCli('${k}')" class="text-blue-500">✏️</button><button onclick="eliminarCli('${k}')" class="text-slate-200">✕</button></div></div>
+                <div class="flex justify-between items-end"><div><p class="text-[9px] font-bold text-slate-400">SALDO</p><p class="text-lg font-black ${v.saldo>0?'text-rose-600':'text-emerald-600'}">$${v.saldo || 0}</p></div><button onclick="verFicha('${k}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase">Ver Ficha</button></div>
+            </div>`).join('');
     }
-
-    async function cobrar(k) {
-        let m = parseInt(prompt("Monto que entrega el cliente:"));
-        if(m > 0) {
-            db.clientes[k].saldo -= m;
-            let id = "X" + Date.now();
-            db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "Cobro: "+db.clientes[k].nom, v: m, tp: "ING", m: "EFECTIVO" };
-            await syncDB("", db);
+    function verFicha(k) {
+        clienteActualKey = k; const c = db.clientes[k];
+        document.getElementById('ficha-nom').innerText = c.nom;
+        document.getElementById('ficha-saldo').innerText = "$" + (c.saldo || 0);
+        document.getElementById('ficha-datos').innerHTML = `<span>🪪 DNI: ${c.dni || '---'}</span><span>📱 CEL: ${c.cel || '---'}</span><span>📍 DIR: ${c.dir || '---'}</span>`;
+        const movs = Object.values(db.caja).filter(x => x.cli === c.nom || (x.c && x.c.includes(c.nom))).reverse();
+        document.getElementById('ficha-movimientos').innerHTML = movs.map(x => `<tr class="border-b"><td class="py-3 text-slate-400 font-mono text-[10px]">${x.f}</td><td class="py-3 uppercase text-slate-600 text-[10px]">${x.c}</td><td class="py-3 text-right ${x.c && x.c.includes('PAGO') ? 'text-emerald-600' : 'text-rose-600'} font-black">$${x.v}</td></tr>`).join('');
+        document.getElementById('modal-cliente').classList.remove('hidden');
+    }
+    async function cobrarFicha() {
+        const monto = parseInt(prompt("Ingrese monto del cobro:"));
+        const metodo = document.getElementById('ficha-metodo-pago').value;
+        if(monto > 0) {
+            db.clientes[clienteActualKey].saldo -= monto;
+            const ahora = new Date();
+            db.caja["P"+Date.now()] = { f: ahora.toISOString().split('T')[0], h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), c: "PAGO RECIBIDO: " + db.clientes[clienteActualKey].nom, cli: db.clientes[clienteActualKey].nom, cliKey: clienteActualKey, v: monto, tp: "ING", m: metodo };
+            await syncDB("", db); cerrarFicha();
         }
     }
+    function editarCli(k) { const c = db.clientes[k]; document.getElementById('c-key').value = k; document.getElementById('c-nom').value = c.nom; document.getElementById('c-dni').value = c.dni; document.getElementById('c-cel').value = c.cel; document.getElementById('c-dir').value = c.dir; document.getElementById('c-rec').value = c.rec; window.scrollTo(0,0); }
+    async function eliminarCli(k) { if(confirm("¿Eliminar?")) { delete db.clientes[k]; await syncDB("clientes", db.clientes); } }
+    function cerrarFicha() { document.getElementById('modal-cliente').classList.add('hidden'); }
 
     // --- CAJA ---
-    async function pushGasto() {
-        let id = "X" + Date.now();
-        db.caja[id] = { f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString(), c: "GASTO: " + document.getElementById('x-con').value, v: parseInt(document.getElementById('x-mon').value), tp: "EGR", m: "EFECTIVO" };
-        await syncDB("caja", db.caja);
-        limpiarInputs('x');
-    }
-
-    // --- RENDER GENERAL ---
-    function render() {
-        // Medios de Pago
-        const medios = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"];
-        document.getElementById('v-pago').innerHTML = medios.map(m => `<option>${m}</option>`).join('');
-
-        // Clientes Select
-        document.getElementById('v-cli').innerHTML = '<option value="null">Consumidor Final</option>' + 
-            Object.entries(db.clientes).map(([k,v]) => `<option value="${k}">${v.nom}</option>`).join('');
-
-        // Stock con buscador
-        let searchS = document.getElementById('s-search').value.toLowerCase();
-        document.getElementById('s-t').innerHTML = Object.entries(db.stock)
-            .filter(([k,s]) => s.nom.toLowerCase().includes(searchS) || s.cod.includes(searchS))
-            .map(([k,s]) => `<tr><td class="p-3 text-xs font-mono">${s.cod}</td><td class="p-3 font-bold">${s.nom}</td><td class="p-3 text-center"><span class="px-2 py-1 rounded bg-slate-100 font-bold">${s.can}</span></td><td class="p-3 font-bold text-rose-600">$${s.pre}</td><td class="p-3 text-center"><button onclick="editarProducto('${k}')">✏️</button></td></tr>`).join('');
-
-        // Historial Ventas (Caja Ingresos del día)
-        let hoy = new Date().toISOString().split('T')[0];
-        let historialHTML = "";
-        let cajaHTML = "";
+    function renderCaja() {
+        const d = document.getElementById('x-desde').value, h = document.getElementById('x-hasta').value, m = document.getElementById('x-filtro-medio').value, s = document.getElementById('x-search').value.toLowerCase();
         
-        Object.values(db.caja).reverse().forEach(x => {
-            let fila = `<tr><td class="p-2">${x.t}</td><td class="p-2">${x.c}</td><td class="p-2 font-bold">${x.m || '---'}</td><td class="p-2 text-right font-black">$${x.v}</td></tr>`;
-            if(x.f === hoy && x.tp === "ING") historialHTML += fila;
-            cajaHTML += `<tr><td class="p-3">${x.f}</td><td class="p-3">${x.c}</td><td class="p-3 font-bold">$${x.v}</td><td class="p-3 uppercase text-xs font-black ${x.tp=='ING'?'text-emerald-500':'text-rose-500'}">${x.tp}</td></tr>`;
+        let movs = Object.entries(db.caja).map(([key, val]) => ({...val, id: key}))
+            .filter(x => (!d || x.f >= d) && (!h || x.f <= h) && (m == "TODOS" || (x.m && x.m.includes(m))) && (x.c.toLowerCase().includes(s)));
+        
+        movs.sort((a,b) => ordenAsc ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id));
+        
+        let tI=0, tE=0, cH="";
+        movs.forEach(x => { 
+            if(x.tp=='ING') tI+=x.v; else tE+=x.v; 
+            cH+=`<tr class="text-[10px] font-bold border-b">
+                <td class="p-4"><span class="block text-slate-400 font-mono">${x.f}</span><span class="text-rose-500">${x.h || ''}</span></td>
+                <td class="p-4 uppercase text-slate-400">${x.cli || '---'}</td>
+                <td class="p-4 uppercase text-slate-600">${x.c}</td>
+                <td class="p-4"><span class="bg-slate-100 px-2 py-1 rounded text-[9px] font-black">${x.m||'-'}</span></td>
+                <td class="p-4 text-right ${x.tp=='ING'?'text-emerald-600':'text-rose-600'}">$${x.v.toLocaleString()}</td>
+                <td class="p-4 text-right"><button onclick="eliminarMovimiento('${x.id}')" class="text-slate-300 hover:text-rose-600 transition-colors text-lg">✕</button></td>
+            </tr>`; 
         });
-        
-        document.getElementById('v-historial').innerHTML = historialHTML || '<tr><td colspan="4" class="text-center p-4 text-slate-400 italic">No hay ventas registradas hoy</td></tr>';
-        document.getElementById('x-t').innerHTML = cajaHTML;
-
-        renderClientes();
+        document.getElementById('resumen-caja').innerHTML = `<div class="bg-white p-4 rounded-xl border-b-4 border-emerald-500 text-center"><p class="text-[10px]">INGRESOS</p><p class="text-xl font-black text-emerald-600">$${tI.toLocaleString()}</p></div><div class="bg-white p-4 rounded-xl border-b-4 border-rose-500 text-center"><p class="text-[10px]">EGRESOS</p><p class="text-xl font-black text-rose-600">$${tE.toLocaleString()}</p></div><div class="bg-slate-900 p-4 rounded-xl text-white text-center"><p class="text-[10px]">NETO</p><p class="text-xl font-black">$${(tI-tE).toLocaleString()}</p></div>`;
+        document.getElementById('x-t').innerHTML = cH;
     }
+    function toggleOrden() { ordenAsc = !ordenAsc; document.getElementById('btn-orden').innerText = ordenAsc ? "ANTIGUOS ↑" : "RECIENTES ↓"; renderCaja(); }
 
-    function limpiarInputs(p) {
-        document.querySelectorAll(`input[id^="${p}-"]`).forEach(i => i.value = '');
-        if(p === 's') document.getElementById('s-key').value = '';
+    // --- UI ---
+    function ir(id, btn) { document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('activa'); btn.classList.add('active'); }
+    function toggleDetallePago() { const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle'); const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; if(DET[m]){ s.classList.remove('hidden'); s.innerHTML = DET[m].map(o=>`<option value="${o}">${o}</option>`).join(''); } else { s.classList.add('hidden'); } }
+    function renderVUI() {
+        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=>`<option value="${m}">${m}</option>`).join('');
+        document.getElementById('v-cli').innerHTML = '<option value="null">CONSUMIDOR FINAL</option>' + Object.entries(db.clientes).map(([k,v])=>`<option value="${k}">${v.nom}</option>`).join('');
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('v-historial').innerHTML = Object.values(db.caja).filter(x => x.f === hoy && x.tp === "ING").reverse().map(x => `<tr class="text-[11px] font-bold"><td class="py-3 text-slate-400 font-mono">${x.h || '--:--'}</td><td class="py-3 uppercase text-slate-400">${x.cli || 'C. FINAL'}</td><td class="py-3 uppercase text-slate-600">${x.c}</td><td class="py-3"><span class="bg-slate-100 px-2 py-1 rounded text-[9px]">${x.m}</span></td><td class="py-3 text-right font-black">$${x.v.toLocaleString()}</td></tr>`).join('');
     }
-
+    function limpiarInputs(p) { document.querySelectorAll(`input[id^="${p}-"]`).forEach(i => i.value = ''); }
     loadDB();
 </script>
 </body>
