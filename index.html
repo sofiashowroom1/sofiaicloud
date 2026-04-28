@@ -172,7 +172,7 @@
         let t = 0;
         document.getElementById('v-t').innerHTML = carro.map((i, idx) => {
             let sub = i.pre * i.cant; t += sub;
-            return `<tr class="uppercase text-xs"><td class="py-3">${i.nom}</td><td>${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>`;
+            return <tr class="uppercase text-xs"><td class="py-3">${i.nom}</td><td>${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>;
         }).join('');
         document.getElementById('v-tot').innerText = t;
     }
@@ -182,7 +182,7 @@
         let met = document.getElementById('v-pago').value;
         let det = document.getElementById('v-pago-detalle').value;
         let cliKey = document.getElementById('v-cli').value;
-        let mF = (met == 'TRANSFERENCIA' || met == 'TARJETA') ? `${met} (${det})` : met;
+        let mF = (met == 'TRANSFERENCIA' || met == 'TARJETA') ? ${met} (${det}) : met;
         
         // Copia del carro para guardar el detalle técnico y poder revertir stock luego si se elimina
         let detalleProductos = carro.map(c => ({ k: c.k, nom: c.nom, cant: c.cant }));
@@ -196,7 +196,7 @@
         db.caja["C"+Date.now()] = { 
             f: ahora.toISOString().split('T')[0], 
             h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
-            c: `VENTA: ${carro.map(c => c.nom).join(', ')}`, 
+            c: VENTA: ${carro.map(c => c.nom).join(', ')}, 
             cli: nomCli,
             cliKey: cliKey, // Guardamos la key para revertir saldo si se elimina
             v: tot, 
@@ -244,7 +244,7 @@
         let ss = document.getElementById('s-search').value.toLowerCase();
         document.getElementById('s-t').innerHTML = Object.entries(db.stock).filter(([k,s]) => s.nom.toLowerCase().includes(ss) || s.cod.toLowerCase().includes(ss)).map(([k,s]) => {
             let rent = s.pre > 0 ? ((s.pre - s.cos) / s.pre) * 100 : 0;
-            return `<tr class="uppercase text-[11px] font-bold"><td class="p-3 text-rose-500 font-mono">${s.cod}</td><td class="p-3">${s.nom}</td><td class="p-3 text-center">${s.can}</td><td class="p-3 text-slate-400">$${s.cos}</td><td class="p-3 text-emerald-600 font-black">$${s.pre}</td><td class="p-3 font-black">${rent.toFixed(1)}%</td><td class="p-3 text-right flex justify-end gap-3"><button onclick="editarStock('${k}')">✏️</button><button onclick="elimStock('${k}')">✕</button></td></tr>`;
+            return <tr class="uppercase text-[11px] font-bold"><td class="p-3 text-rose-500 font-mono">${s.cod}</td><td class="p-3">${s.nom}</td><td class="p-3 text-center">${s.can}</td><td class="p-3 text-slate-400">$${s.cos}</td><td class="p-3 text-emerald-600 font-black">$${s.pre}</td><td class="p-3 font-black">${rent.toFixed(1)}%</td><td class="p-3 text-right flex justify-end gap-3"><button onclick="editarStock('${k}')">✏️</button><button onclick="elimStock('${k}')">✕</button></td></tr>;
         }).join('');
     }
     function editarStock(k) { let s = db.stock[k]; document.getElementById('s-key').value = k; document.getElementById('s-cod').value = s.cod; document.getElementById('s-nom').value = s.nom; document.getElementById('s-can').value = s.can; document.getElementById('s-cos').value = s.cos; document.getElementById('s-pre').value = s.pre; window.scrollTo(0,0); }
@@ -269,9 +269,9 @@
         clienteActualKey = k; const c = db.clientes[k];
         document.getElementById('ficha-nom').innerText = c.nom;
         document.getElementById('ficha-saldo').innerText = "$" + (c.saldo || 0);
-        document.getElementById('ficha-datos').innerHTML = `<span>🪪 DNI: ${c.dni || '---'}</span><span>📱 CEL: ${c.cel || '---'}</span><span>📍 DIR: ${c.dir || '---'}</span>`;
+        document.getElementById('ficha-datos').innerHTML = <span>🪪 DNI: ${c.dni || '---'}</span><span>📱 CEL: ${c.cel || '---'}</span><span>📍 DIR: ${c.dir || '---'}</span>;
         const movs = Object.values(db.caja).filter(x => x.cli === c.nom || (x.c && x.c.includes(c.nom))).reverse();
-        document.getElementById('ficha-movimientos').innerHTML = movs.map(x => `<tr class="border-b"><td class="py-3 text-slate-400 font-mono text-[10px]">${x.f}</td><td class="py-3 uppercase text-slate-600 text-[10px]">${x.c}</td><td class="py-3 text-right ${x.c && x.c.includes('PAGO') ? 'text-emerald-600' : 'text-rose-600'} font-black">$${x.v}</td></tr>`).join('');
+        document.getElementById('ficha-movimientos').innerHTML = movs.map(x => <tr class="border-b"><td class="py-3 text-slate-400 font-mono text-[10px]">${x.f}</td><td class="py-3 uppercase text-slate-600 text-[10px]">${x.c}</td><td class="py-3 text-right ${x.c && x.c.includes('PAGO') ? 'text-emerald-600' : 'text-rose-600'} font-black">$${x.v}</td></tr>).join('');
         document.getElementById('modal-cliente').classList.remove('hidden');
     }
     async function cobrarFicha() {
@@ -309,21 +309,21 @@
                 <td class="p-4 text-right"><button onclick="eliminarMovimiento('${x.id}')" class="text-slate-300 hover:text-rose-600 transition-colors text-lg">✕</button></td>
             </tr>`; 
         });
-        document.getElementById('resumen-caja').innerHTML = `<div class="bg-white p-4 rounded-xl border-b-4 border-emerald-500 text-center"><p class="text-[10px]">INGRESOS</p><p class="text-xl font-black text-emerald-600">$${tI.toLocaleString()}</p></div><div class="bg-white p-4 rounded-xl border-b-4 border-rose-500 text-center"><p class="text-[10px]">EGRESOS</p><p class="text-xl font-black text-rose-600">$${tE.toLocaleString()}</p></div><div class="bg-slate-900 p-4 rounded-xl text-white text-center"><p class="text-[10px]">NETO</p><p class="text-xl font-black">$${(tI-tE).toLocaleString()}</p></div>`;
+        document.getElementById('resumen-caja').innerHTML = <div class="bg-white p-4 rounded-xl border-b-4 border-emerald-500 text-center"><p class="text-[10px]">INGRESOS</p><p class="text-xl font-black text-emerald-600">$${tI.toLocaleString()}</p></div><div class="bg-white p-4 rounded-xl border-b-4 border-rose-500 text-center"><p class="text-[10px]">EGRESOS</p><p class="text-xl font-black text-rose-600">$${tE.toLocaleString()}</p></div><div class="bg-slate-900 p-4 rounded-xl text-white text-center"><p class="text-[10px]">NETO</p><p class="text-xl font-black">$${(tI-tE).toLocaleString()}</p></div>;
         document.getElementById('x-t').innerHTML = cH;
     }
     function toggleOrden() { ordenAsc = !ordenAsc; document.getElementById('btn-orden').innerText = ordenAsc ? "ANTIGUOS ↑" : "RECIENTES ↓"; renderCaja(); }
 
     // --- UI ---
     function ir(id, btn) { document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('activa'); btn.classList.add('active'); }
-    function toggleDetallePago() { const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle'); const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; if(DET[m]){ s.classList.remove('hidden'); s.innerHTML = DET[m].map(o=>`<option value="${o}">${o}</option>`).join(''); } else { s.classList.add('hidden'); } }
+    function toggleDetallePago() { const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle'); const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; if(DET[m]){ s.classList.remove('hidden'); s.innerHTML = DET[m].map(o=><option value="${o}">${o}</option>).join(''); } else { s.classList.add('hidden'); } }
     function renderVUI() {
-        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=>`<option value="${m}">${m}</option>`).join('');
-        document.getElementById('v-cli').innerHTML = '<option value="null">CONSUMIDOR FINAL</option>' + Object.entries(db.clientes).map(([k,v])=>`<option value="${k}">${v.nom}</option>`).join('');
+        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=><option value="${m}">${m}</option>).join('');
+        document.getElementById('v-cli').innerHTML = '<option value="null">CONSUMIDOR FINAL</option>' + Object.entries(db.clientes).map(([k,v])=><option value="${k}">${v.nom}</option>).join('');
         const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('v-historial').innerHTML = Object.values(db.caja).filter(x => x.f === hoy && x.tp === "ING").reverse().map(x => `<tr class="text-[11px] font-bold"><td class="py-3 text-slate-400 font-mono">${x.h || '--:--'}</td><td class="py-3 uppercase text-slate-400">${x.cli || 'C. FINAL'}</td><td class="py-3 uppercase text-slate-600">${x.c}</td><td class="py-3"><span class="bg-slate-100 px-2 py-1 rounded text-[9px]">${x.m}</span></td><td class="py-3 text-right font-black">$${x.v.toLocaleString()}</td></tr>`).join('');
+        document.getElementById('v-historial').innerHTML = Object.values(db.caja).filter(x => x.f === hoy && x.tp === "ING").reverse().map(x => <tr class="text-[11px] font-bold"><td class="py-3 text-slate-400 font-mono">${x.h || '--:--'}</td><td class="py-3 uppercase text-slate-400">${x.cli || 'C. FINAL'}</td><td class="py-3 uppercase text-slate-600">${x.c}</td><td class="py-3"><span class="bg-slate-100 px-2 py-1 rounded text-[9px]">${x.m}</span></td><td class="py-3 text-right font-black">$${x.v.toLocaleString()}</td></tr>).join('');
     }
-    function limpiarInputs(p) { document.querySelectorAll(`input[id^="${p}-"]`).forEach(i => i.value = ''); }
+    function limpiarInputs(p) { document.querySelectorAll(input[id^="${p}-"]).forEach(i => i.value = ''); }
     loadDB();
 </script>
 </body>
