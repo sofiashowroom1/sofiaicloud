@@ -38,7 +38,6 @@
 </nav>
 
 <main class="max-w-7xl mx-auto p-4 space-y-6">
-
     <div id="v" class="seccion activa space-y-6">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
@@ -164,32 +163,69 @@
 </div>
 
 <script>
-    const DB_URL = "https://sofia-sistema-default-rtdb.firebaseio.com/"; 
+    const DB_URL = "https://sofia-sistema-default-rtdb.firebaseio.com/";
     let db = { stock: {}, clientes: {}, caja: {} };
     let carro = [];
     let clienteActualKey = null;
 
-    async function syncDB(path, data) { await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) }); loadDB(); }
-    async function loadDB() { try { const res = await fetch(DB_URL + ".json"); const data = await res.json(); if(data) { db.stock = data.stock || {}; db.clientes = data.clientes || {}; db.caja = data.caja || {}; render(); if(clienteActualKey) verFicha(clienteActualKey); } } catch (e) {} }
-    
-    function render() { renderVUI(); renderStock(); renderClientes(); renderCaja(); renderV(); renderVentasHoy(); }
+    async function syncDB(path, data) { 
+        await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) }); 
+        loadDB();
+    }
 
-    // STOCK 
+    async function loadDB() { 
+        try { 
+            const res = await fetch(DB_URL + ".json");
+            const data = await res.json(); 
+            if(data) { 
+                db.stock = data.stock || {}; 
+                db.clientes = data.clientes || {};
+                db.caja = data.caja || {}; 
+                render(); 
+                if(clienteActualKey) verFicha(clienteActualKey); 
+            } 
+        } catch (e) {} 
+    }
+    
+    function render() { 
+        renderVUI();
+        renderStock(); 
+        renderClientes(); 
+        renderCaja(); 
+        renderV(); 
+        renderVentasHoy(); 
+    }
+
     function calcularPrecioDesdeMargen() {
         const c = parseFloat(document.getElementById('s-cos').value) || 0;
         const m = parseFloat(document.getElementById('s-margen').value) || 0;
         if(c > 0 && m > 0) document.getElementById('s-pre').value = Math.round(c * (1 + (m / 100)));
     }
+
     function calcularMargenDesdePrecio() {
         const c = parseFloat(document.getElementById('s-cos').value) || 0;
         const v = parseFloat(document.getElementById('s-pre').value) || 0;
         if(c > 0 && v > 0) document.getElementById('s-margen').value = Math.round(((v - c) / c) * 100);
     }
+
     async function pushStock() {
         const k = document.getElementById('s-key').value || "S" + Date.now();
-        db.stock[k] = { cod: document.getElementById('s-cod').value.toUpperCase(), nom: document.getElementById('s-nom').value.toUpperCase(), mar: document.getElementById('s-mar').value.toUpperCase(), tal: document.getElementById('s-tal').value.toUpperCase(), col: document.getElementById('s-col').value.toUpperCase(), can: parseInt(document.getElementById('s-can').value) || 0, cos: parseFloat(document.getElementById('s-cos').value) || 0, pre: parseFloat(document.getElementById('s-pre').value) || 0 };
-        await syncDB("stock", db.stock); document.getElementById('s-key').value = ""; document.getElementById('s-margen').value = ""; limpiarInputs('s');
+        db.stock[k] = { 
+            cod: document.getElementById('s-cod').value.toUpperCase(), 
+            nom: document.getElementById('s-nom').value.toUpperCase(), 
+            mar: document.getElementById('s-mar').value.toUpperCase(), 
+            tal: document.getElementById('s-tal').value.toUpperCase(), 
+            col: document.getElementById('s-col').value.toUpperCase(), 
+            can: parseInt(document.getElementById('s-can').value) || 0, 
+            cos: parseFloat(document.getElementById('s-cos').value) || 0, 
+            pre: parseFloat(document.getElementById('s-pre').value) || 0 
+        };
+        await syncDB("stock", db.stock); 
+        document.getElementById('s-key').value = ""; 
+        document.getElementById('s-margen').value = ""; 
+        limpiarInputs('s');
     }
+
     function renderStock() {
         const bus = document.getElementById('s-search').value.toLowerCase();
         document.getElementById('s-t').innerHTML = Object.entries(db.stock).filter(([k,s]) => s.nom.toLowerCase().includes(bus) || s.cod.toLowerCase().includes(bus)).map(([k,s]) => {
@@ -197,60 +233,128 @@
             return <tr class="border-b uppercase"><td class="p-3 text-rose-500 font-mono">${s.cod}</td><td class="p-3">${s.nom}</td><td class="p-3 text-slate-400 text-[10px]">${s.mar}</td><td class="p-3 text-center">${s.can}</td><td class="p-3 text-slate-400">$${s.cos}</td><td class="p-3 text-emerald-500 font-black">${gan}%</td><td class="p-3 text-slate-900 font-black">$${s.pre}</td><td class="p-3 text-right flex justify-end gap-2"><button onclick="editarStock('${k}')">✏️</button><button onclick="elimStock('${k}')">✕</button></td></tr>;
         }).join('');
     }
-    function editarStock(k) { let s = db.stock[k]; document.getElementById('s-key').value = k; document.getElementById('s-cod').value = s.cod; document.getElementById('s-nom').value = s.nom; document.getElementById('s-mar').value = s.mar; document.getElementById('s-tal').value = s.tal; document.getElementById('s-col').value = s.col; document.getElementById('s-can').value = s.can; document.getElementById('s-cos').value = s.cos; document.getElementById('s-pre').value = s.pre; calcularMargenDesdePrecio(); window.scrollTo(0,0); }
-    async function elimStock(k) { if(confirm("¿Eliminar?")) { delete db.stock[k]; await syncDB("stock", db.stock); } }
 
-    // VENTAS
+    function editarStock(k) { 
+        let s = db.stock[k]; 
+        document.getElementById('s-key').value = k; 
+        document.getElementById('s-cod').value = s.cod; 
+        document.getElementById('s-nom').value = s.nom;
+        document.getElementById('s-mar').value = s.mar; 
+        document.getElementById('s-tal').value = s.tal; 
+        document.getElementById('s-col').value = s.col; 
+        document.getElementById('s-can').value = s.can; 
+        document.getElementById('s-cos').value = s.cos; 
+        document.getElementById('s-pre').value = s.pre; 
+        calcularMargenDesdePrecio(); 
+        window.scrollTo(0,0);
+    }
+
+    async function elimStock(k) { 
+        if(confirm("¿Eliminar?")) { 
+            delete db.stock[k]; 
+            await syncDB("stock", db.stock);
+        } 
+    }
+
     function buscarProductosVenta(val) {
-        const div = document.getElementById('v-sugerencias'); if (val.length < 1) { div.classList.add('hidden'); return; }
+        const div = document.getElementById('v-sugerencias');
+        if (val.length < 1) { div.classList.add('hidden'); return; }
         const matches = Object.entries(db.stock).filter(([k, s]) => s.nom.toUpperCase().includes(val.toUpperCase()) || s.cod.toUpperCase().includes(val.toUpperCase()));
         div.innerHTML = matches.map(([k, s]) => <div class="sugerencia-item p-3 border-b cursor-pointer" onclick="seleccionarProdVenta('${s.cod}')"><div class="text-[10px] font-black text-rose-500">${s.cod}</div><div class="text-sm font-bold">${s.nom}</div><div class="text-rose-600 font-black">$${s.pre}</div></div>).join('');
         div.classList.remove('hidden');
     }
-    function seleccionarProdVenta(cod) { document.getElementById('v-scan').value = cod; document.getElementById('v-sugerencias').classList.add('hidden'); addCarro(); }
-    function addCarro() {
-        let cod = document.getElementById('v-scan').value.toUpperCase(), cant = parseInt(document.getElementById('v-cant-v').value) || 1;
-        let k = Object.keys(db.stock).find(key => db.stock[key].cod == cod);
-        if(k && db.stock[k].can >= cant) { carro.push({ k, nom: db.stock[k].nom, pre: db.stock[k].pre, cant: cant, tal: db.stock[k].tal }); document.getElementById('v-scan').value = ''; renderV(); }
+
+    function seleccionarProdVenta(cod) { 
+        document.getElementById('v-scan').value = cod; 
+        document.getElementById('v-sugerencias').classList.add('hidden'); 
+        addCarro();
     }
+
+    function addCarro() {
+        let cod = document.getElementById('v-scan').value.toUpperCase();
+        let cant = parseInt(document.getElementById('v-cant-v').value) || 1;
+        let k = Object.keys(db.stock).find(key => db.stock[key].cod == cod);
+        if(k && db.stock[k].can >= cant) { 
+            carro.push({ k, nom: db.stock[k].nom, pre: db.stock[k].pre, cant: cant, tal: db.stock[k].tal });
+            document.getElementById('v-scan').value = ''; 
+            renderV(); 
+        }
+    }
+
     function renderV() {
-        let t = 0; document.getElementById('v-t').innerHTML = carro.map((i, idx) => { let sub = i.pre * i.cant; t += sub; return <tr class="border-b"><td class="py-3">${i.nom}</td><td class="text-slate-500">T: ${i.tal}</td><td class="text-center">${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600 font-black">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>; }).join('');
+        let t = 0;
+        document.getElementById('v-t').innerHTML = carro.map((i, idx) => { 
+            let sub = i.pre * i.cant; 
+            t += sub; 
+            return <tr class="border-b"><td class="py-3">${i.nom}</td><td class="text-slate-500">T: ${i.tal}</td><td class="text-center">${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600 font-black">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>; 
+        }).join('');
         document.getElementById('v-tot').innerText = t.toLocaleString();
     }
+
     async function finalizarVenta() {
         if(!carro.length) return;
         let tot = parseInt(document.getElementById('v-tot').innerText.replace(/\./g, ''));
-        let met = document.getElementById('v-pago').value; let cliK = document.getElementById('v-cli').value;
+        let met = document.getElementById('v-pago').value; 
+        let cliK = document.getElementById('v-cli').value;
         let mF = (met == 'TRANSFERENCIA' || met == 'TARJETA') ? ${met} (${document.getElementById('v-pago-detalle').value}) : met;
         let detalleCaja = "VENTA: " + carro.map(c => (${c.cant}) ${c.nom}).join(', ');
+        
         carro.forEach(c => { if(db.stock[c.k]) db.stock[c.k].can -= c.cant; });
+        
         const ahora = new Date();
         const fechaHoy = ahora.toISOString().split('T')[0];
+        
         if(met == "CUENTA CORRIENTE" && cliK != "null") {
             if(!db.clientes[cliK].deudas) db.clientes[cliK].deudas = [];
             db.clientes[cliK].deudas.push({ id: Date.now(), f: fechaHoy, c: detalleCaja, v: tot, saldo: tot });
             db.clientes[cliK].saldo = (db.clientes[cliK].saldo || 0) + tot;
         }
-        db.caja["C"+Date.now()] = { f: fechaHoy, h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), c: detalleCaja, cli: (cliK != "null" ? db.clientes[cliK].nom : "C. FINAL"), cliKey: cliK, v: tot, tp: "ING", m: mF, items: carro.map(c => ({k:c.k, cant:c.cant})) };
-        carro = []; renderV(); await syncDB("", db);
+        
+        db.caja["C"+Date.now()] = { 
+            f: fechaHoy, 
+            h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+            c: detalleCaja, 
+            cli: (cliK != "null" ? db.clientes[cliK].nom : "C. FINAL"), 
+            cliKey: cliK, 
+            v: tot, 
+            tp: "ING", 
+            m: mF, 
+            items: carro.map(c => ({k:c.k, cant:c.cant})) 
+        };
+        
+        carro = []; 
+        renderV(); 
+        await syncDB("", db);
     }
+
     function renderVentasHoy() {
         const hoy = new Date().toISOString().split('T')[0];
         document.getElementById('v-historial').innerHTML = Object.values(db.caja).filter(x => x.f === hoy && x.tp === "ING").reverse().map(x => <tr><td class="py-2 text-rose-500 font-mono">${x.h}</td><td class="font-bold">${x.cli}</td><td class="text-slate-400 italic">${x.c}</td><td>${x.m}</td><td class="text-right font-black text-emerald-600">$${x.v}</td></tr>).join('');
     }
 
-    // CLIENTES
     async function pushCli() {
         const k = document.getElementById('c-key').value || "L" + Date.now();
-        db.clientes[k] = { ...db.clientes[k], nom: document.getElementById('c-nom').value.toUpperCase(), dni: document.getElementById('c-dni').value, cel: document.getElementById('c-cel').value, dir: document.getElementById('c-dir').value, rec: document.getElementById('c-rec').value, saldo: db.clientes[k] ? db.clientes[k].saldo : 0 };
-        await syncDB("clientes", db.clientes); limpiarInputs('c');
+        db.clientes[k] = { 
+            ...db.clientes[k], 
+            nom: document.getElementById('c-nom').value.toUpperCase(), 
+            dni: document.getElementById('c-dni').value, 
+            cel: document.getElementById('c-cel').value, 
+            dir: document.getElementById('c-dir').value, 
+            rec: document.getElementById('c-rec').value, 
+            saldo: db.clientes[k] ? db.clientes[k].saldo : 0 
+        };
+        await syncDB("clientes", db.clientes); 
+        limpiarInputs('c');
     }
+
     function renderClientes() {
         const txt = document.getElementById('c-search').value.toLowerCase();
         document.getElementById('c-list').innerHTML = Object.entries(db.clientes).filter(([k,v]) => v.nom.toLowerCase().includes(txt)).map(([k,v]) => <div class="bg-white p-5 rounded-3xl border shadow-sm relative"><div class="absolute top-0 left-0 w-1 h-full ${v.saldo>0?'bg-rose-500':'bg-emerald-400'}"></div><div class="flex justify-between font-black uppercase text-xs mb-3"><span>${v.nom}</span><div class="flex gap-2"><button onclick="editarCli('${k}')">✏️</button><button onclick="elimCli('${k}')">✕</button></div></div><div class="flex justify-between items-end"><div><p class="text-[9px] uppercase text-slate-300">Saldo</p><p class="text-lg font-black ${v.saldo>0?'text-rose-600':'text-emerald-500'}">$${v.saldo || 0}</p></div><button onclick="verFicha('${k}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-bold">Ficha</button></div></div>).join('');
     }
+
     function verFicha(k) {
-        clienteActualKey = k; const c = db.clientes[k];
+        clienteActualKey = k;
+        const c = db.clientes[k];
         document.getElementById('ficha-nom').innerText = c.nom; 
         document.getElementById('ficha-saldo').innerText = "$" + (c.saldo || 0);
         document.getElementById('ficha-datos').innerHTML = <span>DNI: ${c.dni}</span><span>CEL: ${c.cel}</span>;
@@ -265,8 +369,10 @@
         document.getElementById('ficha-movimientos').innerHTML = movs.map(x => <tr class="border-b"><td class="py-3 text-slate-400 font-mono text-[9px]">${x.f}</td><td class="py-3 text-[9px] uppercase">${x.c}</td><td class="py-3 text-right font-black ${x.c.includes('PAGO') ? 'text-emerald-600' : 'text-rose-600'}">$${x.v}</td></tr>).join('');
         document.getElementById('modal-cliente').classList.remove('hidden');
     }
+
     async function deudaManual() {
-        const concepto = prompt("Concepto:"); const monto = parseInt(prompt("Monto:"));
+        const concepto = prompt("Concepto:");
+        const monto = parseInt(prompt("Monto:"));
         if(concepto && monto > 0) {
             const fechaHoy = new Date().toISOString().split('T')[0];
             if(!db.clientes[clienteActualKey].deudas) db.clientes[clienteActualKey].deudas = [];
@@ -276,10 +382,13 @@
             await syncDB("", db);
         }
     }
+
     async function cobrarFicha() {
-        let montoPago = parseInt(prompt("Monto que entrega el cliente:")); 
+        let montoPago = parseInt(prompt("Monto que entrega el cliente:"));
         if(montoPago > 0) {
-            let pagoOriginal = montoPago; const c = db.clientes[clienteActualKey]; c.saldo -= montoPago;
+            let pagoOriginal = montoPago;
+            const c = db.clientes[clienteActualKey]; 
+            c.saldo -= montoPago;
             if(c.deudas) {
                 c.deudas.sort((a,b) => new Date(a.f) - new Date(b.f));
                 for(let d of c.deudas) {
@@ -293,25 +402,52 @@
             await syncDB("", db);
         }
     }
-    function cerrarFicha() { document.getElementById('modal-cliente').classList.add('hidden'); clienteActualKey = null; }
-    function editarCli(k) { let c = db.clientes[k]; document.getElementById('c-key').value = k; document.getElementById('c-nom').value = c.nom; document.getElementById('c-dni').value = c.dni; document.getElementById('c-cel').value = c.cel; document.getElementById('c-dir').value = c.dir; document.getElementById('c-rec').value = c.rec; window.scrollTo(0,0); }
-    async function elimCli(k) { if(confirm("¿Eliminar?")) { delete db.clientes[k]; await syncDB("clientes", db.clientes); } }
 
-    // CAJA
+    function cerrarFicha() { 
+        document.getElementById('modal-cliente').classList.add('hidden'); 
+        clienteActualKey = null;
+    }
+
+    function editarCli(k) { 
+        let c = db.clientes[k]; 
+        document.getElementById('c-key').value = k; 
+        document.getElementById('c-nom').value = c.nom; 
+        document.getElementById('c-dni').value = c.dni;
+        document.getElementById('c-cel').value = c.cel; 
+        document.getElementById('c-dir').value = c.dir; 
+        document.getElementById('c-rec').value = c.rec; 
+        window.scrollTo(0,0);
+    }
+
+    async function elimCli(k) { 
+        if(confirm("¿Eliminar?")) { 
+            delete db.clientes[k]; 
+            await syncDB("clientes", db.clientes);
+        } 
+    }
+
     function renderCaja() {
-        let tI=0, tE=0, cH=""; const fF = document.getElementById('x-filtro-fecha').value; const fT = document.getElementById('x-filtro-tipo').value;
-        const fM = document.getElementById('x-filtro-medio').value; const fX = document.getElementById('x-filtro-texto').value.toLowerCase();
+        let tI=0, tE=0, cH="";
+        const fF = document.getElementById('x-filtro-fecha').value; 
+        const fT = document.getElementById('x-filtro-tipo').value;
+        const fM = document.getElementById('x-filtro-medio').value; 
+        const fX = document.getElementById('x-filtro-texto').value.toLowerCase();
+        
         Object.entries(db.caja).reverse().filter(([id, x]) => {
-            let mF = fF ? x.f === fF : true; let mT = fT === "TODOS" ? true : x.tp === fT;
-            let mM = fM === "TODOS" ? true : x.m.includes(fM); let mX = (x.cli && x.cli.toLowerCase().includes(fX)) || (x.c && x.c.toLowerCase().includes(fX));
+            let mF = fF ? x.f === fF : true; 
+            let mT = fT === "TODOS" ? true : x.tp === fT;
+            let mM = fM === "TODOS" ? true : x.m.includes(fM); 
+            let mX = (x.cli && x.cli.toLowerCase().includes(fX)) || (x.c && x.c.toLowerCase().includes(fX));
             return mF && mT && mM && mX;
         }).forEach(([id, x]) => { 
             if(x.tp=='ING') tI+=x.v; else tE+=x.v; 
             cH+=<tr class="border-b"><td class="p-4">${x.f} <br> ${x.h}</td><td class="p-4 uppercase">${x.cli || '-'}</td><td class="p-4 text-slate-500 uppercase">${x.c}</td><td class="p-4 uppercase">${x.m}</td><td class="p-4 text-right ${x.tp=='ING'?'text-emerald-500':'text-rose-600'} font-black">$${x.v.toLocaleString()}</td><td class="p-4 text-right"><button onclick="elimMov('${id}')">✕</button></td></tr>; 
         });
+        
         document.getElementById('resumen-caja').innerHTML = <div class="bg-white p-4 rounded-3xl border-b-4 border-emerald-400 text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Ingresos</p><p class="text-xl font-black text-emerald-500">$${tI.toLocaleString()}</p></div><div class="bg-white p-4 rounded-3xl border-b-4 border-rose-500 text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Egresos</p><p class="text-xl font-black text-rose-600">$${tE.toLocaleString()}</p></div><div class="bg-slate-900 p-4 rounded-3xl text-white text-center shadow-lg"><p class="text-[9px] font-bold text-slate-300 uppercase">Neto</p><p class="text-xl font-black">$${(tI-tE).toLocaleString()}</p></div>;
         document.getElementById('x-t').innerHTML = cH || '<tr><td colspan="6" class="text-center py-10 text-slate-300 italic">No hay resultados</td></tr>';
     }
+
     async function elimMov(id) {
         if(!confirm("¿Revertir operación?")) return;
         const m = db.caja[id];
@@ -320,12 +456,13 @@
             db.clientes[m.cliKey].saldo -= m.v;
             db.clientes[m.cliKey].deudas = db.clientes[m.cliKey].deudas.filter(d => d.id !== parseInt(id.substring(1)) && d.v !== m.v);
         }
-        delete db.caja[id]; await syncDB("", db);
+        delete db.caja[id]; 
+        await syncDB("", db);
     }
 
-    // EXPORTAR EXCEL
     function exportarExcel(tipo) {
-        let data = []; let nom = "";
+        let data = [];
+        let nom = "";
         if (tipo === 'stock') {
             nom = "STOCK";
             data = Object.values(db.stock).map(s => ({ CODIGO: s.cod, PRODUCTO: s.nom, MARCA: s.mar, TALLE: s.tal, COLOR: s.col, CANT: s.can, COSTO: s.cos, VENTA: s.pre }));
@@ -338,24 +475,40 @@
             data = Object.values(db.caja).filter(x => tipo === 'ventas' ? x.f === hoy && x.tp === "ING" : true).map(x => ({ FECHA: x.f, HORA: x.h, CLIENTE: x.cli, CONCEPTO: x.c, MONTO: x.v, MEDIO: x.m }));
         }
         if(!data.length) return alert("Sin datos");
-        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data); 
+        const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Reporte");
         XLSX.writeFile(wb, ${nom}_${new Date().toLocaleDateString()}.xlsx);
     }
 
-    // UI
-    function ir(id, btn) { document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('activa'); btn.classList.add('active'); }
-    function toggleDetallePago() { 
-        const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle'); 
-        const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; 
-        if(DET[m]){ s.classList.remove('hidden'); s.innerHTML = DET[m].map(o=><option value="${o}">${o}</option>).join(''); } else { s.classList.add('hidden'); } 
+    function ir(id, btn) { 
+        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
+        document.getElementById(id).classList.add('activa'); 
+        btn.classList.add('active'); 
     }
+
+    function toggleDetallePago() { 
+        const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle');
+        const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; 
+        if(DET[m]){ 
+            s.classList.remove('hidden'); 
+            s.innerHTML = DET[m].map(o=><option value="${o}">${o}</option>).join('');
+        } else { s.classList.add('hidden'); } 
+    }
+
     function renderVUI() { 
-        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=><option value="${m}">${m}</option>).join(''); 
+        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=><option value="${m}">${m}</option>).join('');
         document.getElementById('v-cli').innerHTML = '<option value="null">CONSUMIDOR FINAL</option>' + Object.entries(db.clientes).map(([k,v])=><option value="${k}">${v.nom}</option>).join(''); 
     }
-    function limpiarInputs(p) { document.querySelectorAll(input[id^="${p}-"]).forEach(i => i.value = ''); }
-    document.addEventListener('click', (e) => { if (e.target.id !== 'v-scan') document.getElementById('v-sugerencias').classList.add('hidden'); });
+
+    function limpiarInputs(p) { 
+        document.querySelectorAll(input[id^="${p}-"]).forEach(i => i.value = '');
+    }
+
+    document.addEventListener('click', (e) => { 
+        if (e.target.id !== 'v-scan') document.getElementById('v-sugerencias').classList.add('hidden'); 
+    });
 
     loadDB();
 </script>
