@@ -3,28 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TEXTIL CLOUD PRO - 2026</title>
+    <title>SOFIA SHOWROOM - Gestión 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .seccion { display: none; }
         .seccion.activa { display: block; animation: fadeIn 0.2s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .nav-btn.active { background-color: #e11d48; color: white; }
+        .nav-btn.active { background-color: #e11d48; color: white; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2); }
+        #v-sugerencias { position: absolute; z-index: 100; width: 100%; max-height: 250px; overflow-y: auto; background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-top: 5px; border: 1px solid #e2e8f0; }
+        .sugerencia-item:hover { background-color: #fff1f2; }
+        .btn-excel { background-color: #166534; color: white; padding: 8px 12px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; gap: 5px; border: none; cursor: pointer; }
+        .btn-excel:hover { background-color: #15803d; transform: translateY(-1px); }
     </style>
 </head>
 <body class="text-slate-800">
 
-<nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl">
+<nav class="bg-slate-900 text-white p-2 sticky top-0 z-50 shadow-xl">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 class="font-black text-rose-500 text-xl tracking-tighter uppercase">Textil<span class="text-white">Cloud</span></h1>
+        <div class="flex items-center gap-2">
+            <img src="image_251a70.png" alt="Sofia Showroom" class="h-12 w-auto object-contain brightness-110">
+            <span class="font-black tracking-tighter text-xl italic text-rose-500">SOFIA</span>
+        </div>
         <div class="flex gap-1 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
-            <button onclick="ir('v', this)" class="nav-btn active px-4 py-2 rounded-lg text-sm font-bold transition-all">🛒 VENTAS</button>
-            <button onclick="ir('s', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">📦 STOCK</button>
-            <button onclick="ir('c', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">👥 CLIENTES</button>
-            <button onclick="ir('x', this)" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">💰 CAJA</button>
-            <button onclick="loadDB()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-500 transition-all">🔄 SYNC</button>
+            <button onclick="ir('v', this)" class="nav-btn active px-5 py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-tight">🛒 Ventas</button>
+            <button onclick="ir('s', this)" class="nav-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-tight">📦 Stock</button>
+            <button onclick="ir('c', this)" class="nav-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-tight">👥 Clientes</button>
+            <button onclick="ir('x', this)" class="nav-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-tight">💰 Caja</button>
+            <button onclick="loadDB()" class="bg-blue-600 px-4 py-2.5 rounded-xl text-[10px] font-bold hover:bg-blue-500 transition-all uppercase">🔄 Sync</button>
         </div>
     </div>
 </nav>
@@ -32,93 +40,97 @@
 <main class="max-w-7xl mx-auto p-4 space-y-6">
 
     <div id="v" class="seccion activa space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border p-6">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-                <div class="md:col-span-6 flex gap-2">
-                    <input type="text" id="v-scan" class="flex-1 p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 font-bold text-lg" placeholder="Código + Enter" onkeypress="if(event.key=='Enter') addCarro()">
-                    <input type="number" id="v-cant-v" value="1" min="1" class="w-24 p-4 bg-rose-50 border-2 border-rose-100 rounded-xl outline-none font-bold text-center text-rose-600" title="Cantidad">
+                <div class="md:col-span-6 flex gap-2 relative">
+                    <div class="flex-1 relative">
+                        <input type="text" id="v-scan" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-bold text-lg outline-none focus:ring-2 focus:ring-rose-500" placeholder="Buscar prenda o código..." onkeyup="buscarProductosVenta(this.value)" onkeypress="if(event.key=='Enter') addCarro()">
+                        <div id="v-sugerencias" class="hidden"></div>
+                    </div>
+                    <input type="number" id="v-cant-v" value="1" min="1" class="w-20 p-4 bg-rose-50 border border-rose-100 rounded-2xl font-bold text-center text-rose-600">
                 </div>
                 <div class="md:col-span-3 flex flex-col gap-2">
-                    <select id="v-pago" onchange="toggleDetallePago()" class="p-4 bg-slate-50 border rounded-xl font-bold outline-none"></select>
-                    <select id="v-pago-detalle" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl font-medium text-sm outline-none"></select>
+                    <select id="v-pago" onchange="toggleDetallePago()" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none"></select>
+                    <select id="v-pago-detalle" class="hidden p-3 bg-rose-50 border border-rose-100 rounded-xl font-medium text-sm outline-none text-rose-600"></select>
                 </div>
-                <select id="v-cli" class="md:col-span-3 p-4 bg-slate-50 border rounded-xl font-bold outline-none"></select>
+                <select id="v-cli" class="md:col-span-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none"></select>
             </div>
             <div class="overflow-x-auto min-h-[150px] mb-4">
-                <table class="w-full text-left">
-                    <thead class="text-[10px] uppercase text-slate-400 border-b">
-                        <tr><th class="pb-2">Producto</th><th class="pb-2">Cant.</th><th class="pb-2">P. Unit</th><th class="pb-2">Subtotal</th><th class="pb-2 text-right">Quitar</th></tr>
-                    </thead>
-                    <tbody id="v-t" class="divide-y font-bold"></tbody>
+                <table class="w-full text-left text-[11px] font-bold">
+                    <thead class="text-[10px] uppercase text-slate-400 border-b font-black"><tr><th class="pb-2">Producto</th><th class="pb-2">Talle</th><th class="pb-2 text-center">Cant.</th><th class="pb-2">P. Unit</th><th class="pb-2">Subtotal</th><th class="pb-2 text-right">Quitar</th></tr></thead>
+                    <tbody id="v-t" class="divide-y font-bold text-slate-600 uppercase"></tbody>
                 </table>
             </div>
-            <div class="flex flex-col md:flex-row justify-between items-center pt-6 border-t gap-4">
-                <div class="text-4xl font-black text-slate-900 uppercase">Total: $<span id="v-tot">0</span></div>
-                <button onclick="finalizarVenta()" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-5 rounded-2xl font-black shadow-lg uppercase text-lg">Registrar Venta</button>
+            <div class="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-rose-50 gap-4">
+                <div class="text-4xl font-black text-slate-900 uppercase tracking-tighter">Total: <span class="text-rose-600">$</span><span id="v-tot">0</span></div>
+                <button onclick="finalizarVenta()" class="w-full md:w-auto bg-rose-600 hover:bg-rose-500 text-white px-12 py-5 rounded-2xl font-black shadow-lg uppercase text-lg transition-all active:scale-95">Registrar Venta</button>
             </div>
         </div>
-        <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">Ventas Realizadas (Hoy)</h3>
-            <div class="overflow-x-auto"><table class="w-full text-left">
-                <thead class="text-[10px] uppercase text-slate-400 border-b"><tr><th class="pb-2">Hora</th><th class="pb-2">Cliente</th><th class="pb-2">Detalle</th><th class="pb-2">Pago</th><th class="pb-2 text-right">Monto</th></tr></thead>
-                <tbody id="v-historial" class="divide-y"></tbody>
-            </table></div>
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Ventas de Hoy</h3>
+                <button onclick="exportarExcel('ventas')" class="btn-excel">📥 Descargar Ventas</button>
+            </div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-[10px] font-bold"><thead class="text-[9px] uppercase text-slate-300 border-b font-bold"><tr><th class="pb-2">Hora</th><th class="pb-2">Cliente</th><th class="pb-2">Detalle Productos</th><th class="pb-2">Medio</th><th class="pb-2 text-right">Monto</th></tr></thead><tbody id="v-historial" class="divide-y uppercase"></tbody></table></div>
         </div>
     </div>
 
     <div id="s" class="seccion space-y-4">
-        <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <h2 class="text-xl font-bold mb-4 text-blue-600 uppercase">Inventario y Rentabilidad</h2>
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
-                <input type="hidden" id="s-key">
-                <input type="text" id="s-cod" placeholder="Código" class="p-2 border rounded-lg uppercase font-mono text-xs">
-                <input type="text" id="s-nom" placeholder="Prenda" class="p-2 border rounded-lg text-xs">
-                <input type="number" id="s-can" placeholder="Stock" class="p-2 border rounded-lg text-xs">
-                <input type="number" id="s-cos" placeholder="Costo $" class="p-2 border border-blue-200 bg-blue-50 rounded-lg text-xs font-bold">
-                <input type="number" id="s-pre" placeholder="Venta $" class="p-2 border border-emerald-200 bg-emerald-50 rounded-lg text-xs font-bold">
-                <button onclick="pushStock()" class="col-span-2 md:col-span-1 bg-blue-600 text-white font-black rounded-lg py-2 uppercase text-[10px]">Guardar</button>
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-black text-rose-600 uppercase italic">Inventario</h2>
+                <button onclick="exportarExcel('stock')" class="btn-excel">📥 Exportar Stock</button>
             </div>
-            <input type="text" id="s-search" oninput="renderStock()" placeholder="🔍 Buscar producto..." class="w-full p-4 bg-slate-100 rounded-xl mb-4 outline-none">
-            <div class="overflow-x-auto"><table class="w-full text-left">
-                <thead class="text-[10px] uppercase text-slate-400 border-b"><tr><th class="p-3">Código</th><th class="p-3">Producto</th><th class="p-3 text-center">Cant.</th><th class="p-3">Costo</th><th class="p-3">Venta</th><th class="p-3">Rent %</th><th class="p-3 text-right">Acción</th></tr></thead>
-                <tbody id="s-t" class="divide-y"></tbody>
-            </table></div>
+            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2 mb-6">
+                <input type="hidden" id="s-key">
+                <input type="text" id="s-cod" placeholder="CÓDIGO" class="p-2 border rounded-xl uppercase text-xs">
+                <input type="text" id="s-nom" placeholder="PRENDA" class="p-2 border rounded-xl text-xs">
+                <input type="text" id="s-mar" placeholder="MARCA" class="p-2 border rounded-xl text-xs">
+                <input type="text" id="s-tal" placeholder="TALLE" class="p-2 border rounded-xl text-xs">
+                <input type="text" id="s-col" placeholder="COLOR" class="p-2 border rounded-xl text-xs">
+                <input type="number" id="s-can" placeholder="CANT" class="p-2 border rounded-xl text-xs">
+                <div class="relative"><span class="absolute -top-3 left-1 text-[8px] font-bold text-slate-400">COSTO</span><input type="number" id="s-cos" oninput="calcularPrecioDesdeMargen()" class="p-2 border bg-slate-50 rounded-xl text-xs font-bold w-full"></div>
+                <div class="relative"><span class="absolute -top-3 left-1 text-[8px] font-bold text-emerald-500">% GAN</span><input type="number" id="s-margen" oninput="calcularPrecioDesdeMargen()" class="p-2 border border-emerald-100 bg-emerald-50 rounded-xl text-xs font-bold text-emerald-600 w-full"></div>
+                <div class="relative"><span class="absolute -top-3 left-1 text-[8px] font-bold text-rose-500">VENTA</span><input type="number" id="s-pre" oninput="calcularMargenDesdePrecio()" class="p-2 border border-rose-100 bg-rose-50 rounded-xl text-xs font-bold text-rose-600 w-full"></div>
+                <button onclick="pushStock()" class="bg-slate-800 text-white font-black rounded-xl py-2 uppercase text-[10px]">Guardar</button>
+            </div>
+            <input type="text" id="s-search" oninput="renderStock()" placeholder="🔍 Buscar..." class="w-full p-4 bg-slate-50 border rounded-2xl mb-4 outline-none">
+            <div class="overflow-x-auto"><table class="w-full text-left text-[11px] font-bold"><thead class="text-[10px] uppercase text-slate-400 border-b"><tr><th>Código</th><th>Producto</th><th>Marca</th><th class="text-center">Stock</th><th>Costo</th><th class="text-emerald-500">% Gan.</th><th>Venta</th><th class="text-right">Acción</th></tr></thead><tbody id="s-t" class="divide-y uppercase"></tbody></table></div>
         </div>
     </div>
 
     <div id="c" class="seccion space-y-4">
-        <div class="bg-white rounded-2xl shadow-sm border p-6">
-            <h2 class="text-xl font-bold mb-4 text-emerald-600 uppercase">Gestión de Clientes</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-                <input type="hidden" id="c-key">
-                <input type="text" id="c-nom" placeholder="Nombre Completo" class="p-3 border rounded-xl">
-                <input type="text" id="c-dni" placeholder="DNI" class="p-3 border rounded-xl">
-                <input type="text" id="c-cel" placeholder="Celular" class="p-3 border rounded-xl">
-                <input type="text" id="c-dir" placeholder="Dirección" class="p-3 border rounded-xl">
-                <select id="c-rec" class="p-3 border rounded-xl font-semibold"><option value="NO">SIN RECIBO</option><option value="SI">CON RECIBO</option></select>
-                <button onclick="pushCli()" class="lg:col-span-5 bg-emerald-500 text-white font-black rounded-xl py-3 uppercase">Guardar Cliente</button>
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-black text-emerald-600 uppercase italic">Clientes</h2>
+                <button onclick="exportarExcel('clientes')" class="btn-excel">📥 Descargar Clientes</button>
             </div>
-            <input type="text" id="c-search" oninput="renderClientes()" placeholder="🔍 Buscar cliente..." class="w-full p-4 bg-slate-100 rounded-xl mb-6 outline-none">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                <input type="hidden" id="c-key"><input type="text" id="c-nom" placeholder="NOMBRE" class="p-3 border rounded-xl uppercase text-xs">
+                <input type="text" id="c-dni" placeholder="DNI" class="p-3 border rounded-xl text-xs"><input type="text" id="c-cel" placeholder="CEL" class="p-3 border rounded-xl text-xs">
+                <input type="text" id="c-dir" placeholder="DIR" class="p-3 border rounded-xl text-xs">
+                <select id="c-rec" class="p-3 border rounded-xl text-xs font-bold"><option value="NO">SIN RECIBO</option><option value="SI">CON RECIBO</option></select>
+                <button onclick="pushCli()" class="lg:col-span-5 bg-emerald-500 text-white font-black rounded-xl py-3 uppercase">Registrar</button>
+            </div>
+            <input type="text" id="c-search" oninput="renderClientes()" placeholder="🔍 Buscar cliente..." class="w-full p-4 bg-slate-50 border rounded-2xl mb-6 outline-none">
             <div id="c-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
     </div>
 
     <div id="x" class="seccion space-y-4">
+        <div class="flex justify-between items-center">
+             <h2 class="text-xl font-black text-slate-800 uppercase italic">Movimientos de Caja</h2>
+             <button onclick="exportarExcel('caja')" class="btn-excel py-3 px-6">📥 Exportar Reporte de Caja</button>
+        </div>
         <div id="resumen-caja" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-        <div class="bg-white rounded-2xl border p-6 shadow-sm">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border mb-4">
-                <input type="date" id="x-desde" onchange="renderCaja()" class="p-2 border rounded-lg text-xs">
-                <input type="date" id="x-hasta" onchange="renderCaja()" class="p-2 border rounded-lg text-xs">
-                <select id="x-filtro-medio" onchange="renderCaja()" class="p-2 border rounded-lg text-xs font-bold"><option value="TODOS">TODOS LOS PAGOS</option><option value="EFECTIVO">EFECTIVO</option><option value="TRANSFERENCIA">TRANSFERENCIA</option><option value="TARJETA">TARJETA</option></select>
-                <input type="text" id="x-search" oninput="renderCaja()" placeholder="🔍 Buscar concepto..." class="md:col-span-1 p-2 border rounded-lg text-xs">
-                <button onclick="toggleOrden()" id="btn-orden" class="bg-slate-900 text-white text-[10px] font-bold rounded-lg px-2">RECIENTES ↓</button>
+        <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <input type="date" id="x-filtro-fecha" onchange="renderCaja()" class="p-3 bg-slate-50 rounded-xl border text-xs font-bold">
+                <select id="x-filtro-tipo" onchange="renderCaja()" class="p-3 bg-slate-50 rounded-xl border text-xs font-bold"><option value="TODOS">TODOS</option><option value="ING">INGRESOS</option><option value="EGR">EGRESOS</option></select>
+                <select id="x-filtro-medio" onchange="renderCaja()" class="p-3 bg-slate-50 rounded-xl border text-xs font-bold"><option value="TODOS">TODOS LOS MEDIOS</option><option value="EFECTIVO">EFECTIVO</option><option value="TRANSFERENCIA">TRANSFERENCIA</option><option value="TARJETA">TARJETA</option></select>
+                <input type="text" id="x-filtro-texto" oninput="renderCaja()" placeholder="Buscar..." class="p-3 bg-slate-50 rounded-xl border text-xs font-bold">
             </div>
-            <div class="overflow-x-auto"><table class="w-full text-sm text-left">
-                <thead class="text-[10px] uppercase text-slate-400 border-b">
-                    <tr><th class="p-4">Fecha/Hora</th><th class="p-4">Cliente</th><th class="p-4">Concepto</th><th class="p-4">Medio</th><th class="p-4 text-right">Monto</th><th class="p-4 text-right">Eliminar</th></tr>
-                </thead>
-                <tbody id="x-t" class="divide-y font-bold"></tbody>
-            </table></div>
+            <div class="overflow-x-auto"><table class="w-full text-[10px] text-left font-bold uppercase"><thead class="text-[9px] text-slate-400 border-b"><tr><th>Fecha</th><th>Cliente</th><th>Concepto</th><th>Medio</th><th class="text-right">Monto</th><th class="text-right">Acción</th></tr></thead><tbody id="x-t" class="divide-y"></tbody></table></div>
         </div>
     </div>
 </main>
@@ -126,19 +138,27 @@
 <div id="modal-cliente" class="fixed inset-0 bg-black/70 hidden z-[100] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl">
         <div class="p-6 border-b bg-slate-50 relative">
-            <h2 id="ficha-nom" class="text-2xl font-black uppercase text-slate-900"></h2>
+            <h2 id="ficha-nom" class="text-2xl font-black uppercase italic"></h2>
             <div id="ficha-datos" class="flex flex-wrap gap-4 mt-2 text-[10px] font-bold text-slate-500 uppercase"></div>
-            <button onclick="cerrarFicha()" class="absolute top-4 right-4 text-2xl font-bold p-2">&times;</button>
+            <button onclick="cerrarFicha()" class="absolute top-4 right-4 text-2xl font-bold">&times;</button>
         </div>
         <div class="p-6 space-y-4">
-            <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
-                <div><p class="text-[9px] font-bold text-slate-400 uppercase">Saldo Deudor</p><p id="ficha-saldo" class="text-3xl font-black text-rose-600"></p></div>
-                <div class="flex flex-col gap-2 w-full md:w-auto">
-                    <select id="ficha-metodo-pago" class="p-2 border rounded-lg font-bold text-[11px] bg-slate-50"><option value="EFECTIVO">💸 EFECTIVO</option><option value="TRANSFERENCIA">📲 TRANSFERENCIA</option><option value="TARJETA">💳 TARJETA</option></select>
-                    <button onclick="cobrarFicha()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[11px]">Registrar Cobro</button>
-                </div>
+            <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex items-center justify-between">
+                <div><p class="text-[9px] font-bold text-slate-400 uppercase">Saldo Total Deudor</p><p id="ficha-saldo" class="text-3xl font-black text-rose-600"></p></div>
+                <button onclick="cobrarFicha()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[11px]">Registrar Pago</button>
             </div>
-            <div class="max-h-60 overflow-y-auto"><table class="w-full text-xs font-bold"><tbody id="ficha-movimientos" class="divide-y"></tbody></table></div>
+            <button onclick="deudaManual()" class="w-full bg-slate-900 text-white py-3 rounded-2xl font-black uppercase text-[10px] hover:bg-rose-600 transition-all">+ Cargar Deuda Manual</button>
+            <div class="space-y-2">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase">Estado de Deudas Individuales (Vencimiento 30 días)</h4>
+                <div id="lista-deudas-individuales" class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="max-h-40 overflow-y-auto border-t pt-4">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase mb-2">Historial Completo</h4>
+                <table class="w-full text-[10px] font-bold uppercase">
+                    <thead class="text-[9px] text-slate-300 border-b"><tr><th class="text-left pb-2">Fecha</th><th class="text-left pb-2">Concepto</th><th class="text-right pb-2">Monto</th></tr></thead>
+                    <tbody id="ficha-movimientos" class="divide-y"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -147,183 +167,196 @@
     const DB_URL = "https://sofia-sistema-default-rtdb.firebaseio.com/"; 
     let db = { stock: {}, clientes: {}, caja: {} };
     let carro = [];
-    let ordenAsc = false;
     let clienteActualKey = null;
 
     async function syncDB(path, data) { await fetch(DB_URL + path + ".json", { method: 'PUT', body: JSON.stringify(data) }); loadDB(); }
-    async function loadDB() { try { const res = await fetch(DB_URL + ".json"); const data = await res.json(); if(data) { db.stock = data.stock || {}; db.clientes = data.clientes || {}; db.caja = data.caja || {}; render(); } } catch (e) { console.error(e); } }
-    function render() { renderVUI(); renderStock(); renderClientes(); renderCaja(); }
+    async function loadDB() { try { const res = await fetch(DB_URL + ".json"); const data = await res.json(); if(data) { db.stock = data.stock || {}; db.clientes = data.clientes || {}; db.caja = data.caja || {}; render(); if(clienteActualKey) verFicha(clienteActualKey); } } catch (e) {} }
+    
+    function render() { renderVUI(); renderStock(); renderClientes(); renderCaja(); renderV(); renderVentasHoy(); }
 
-    // --- VENTAS ---
+    // STOCK 
+    function calcularPrecioDesdeMargen() {
+        const c = parseFloat(document.getElementById('s-cos').value) || 0;
+        const m = parseFloat(document.getElementById('s-margen').value) || 0;
+        if(c > 0 && m > 0) document.getElementById('s-pre').value = Math.round(c * (1 + (m / 100)));
+    }
+    function calcularMargenDesdePrecio() {
+        const c = parseFloat(document.getElementById('s-cos').value) || 0;
+        const v = parseFloat(document.getElementById('s-pre').value) || 0;
+        if(c > 0 && v > 0) document.getElementById('s-margen').value = Math.round(((v - c) / c) * 100);
+    }
+    async function pushStock() {
+        const k = document.getElementById('s-key').value || "S" + Date.now();
+        db.stock[k] = { cod: document.getElementById('s-cod').value.toUpperCase(), nom: document.getElementById('s-nom').value.toUpperCase(), mar: document.getElementById('s-mar').value.toUpperCase(), tal: document.getElementById('s-tal').value.toUpperCase(), col: document.getElementById('s-col').value.toUpperCase(), can: parseInt(document.getElementById('s-can').value) || 0, cos: parseFloat(document.getElementById('s-cos').value) || 0, pre: parseFloat(document.getElementById('s-pre').value) || 0 };
+        await syncDB("stock", db.stock); document.getElementById('s-key').value = ""; document.getElementById('s-margen').value = ""; limpiarInputs('s');
+    }
+    function renderStock() {
+        const bus = document.getElementById('s-search').value.toLowerCase();
+        document.getElementById('s-t').innerHTML = Object.entries(db.stock).filter(([k,s]) => s.nom.toLowerCase().includes(bus) || s.cod.toLowerCase().includes(bus)).map(([k,s]) => {
+            const gan = s.cos > 0 ? Math.round(((s.pre - s.cos)/s.cos)*100) : 0;
+            return `<tr class="border-b uppercase"><td class="p-3 text-rose-500 font-mono">${s.cod}</td><td class="p-3">${s.nom}</td><td class="p-3 text-slate-400 text-[10px]">${s.mar}</td><td class="p-3 text-center">${s.can}</td><td class="p-3 text-slate-400">$${s.cos}</td><td class="p-3 text-emerald-500 font-black">${gan}%</td><td class="p-3 text-slate-900 font-black">$${s.pre}</td><td class="p-3 text-right flex justify-end gap-2"><button onclick="editarStock('${k}')">✏️</button><button onclick="elimStock('${k}')">✕</button></td></tr>`;
+        }).join('');
+    }
+    function editarStock(k) { let s = db.stock[k]; document.getElementById('s-key').value = k; document.getElementById('s-cod').value = s.cod; document.getElementById('s-nom').value = s.nom; document.getElementById('s-mar').value = s.mar; document.getElementById('s-tal').value = s.tal; document.getElementById('s-col').value = s.col; document.getElementById('s-can').value = s.can; document.getElementById('s-cos').value = s.cos; document.getElementById('s-pre').value = s.pre; calcularMargenDesdePrecio(); window.scrollTo(0,0); }
+    async function elimStock(k) { if(confirm("¿Eliminar?")) { delete db.stock[k]; await syncDB("stock", db.stock); } }
+
+    // VENTAS
+    function buscarProductosVenta(val) {
+        const div = document.getElementById('v-sugerencias'); if (val.length < 1) { div.classList.add('hidden'); return; }
+        const matches = Object.entries(db.stock).filter(([k, s]) => s.nom.toUpperCase().includes(val.toUpperCase()) || s.cod.toUpperCase().includes(val.toUpperCase()));
+        div.innerHTML = matches.map(([k, s]) => `<div class="sugerencia-item p-3 border-b cursor-pointer" onclick="seleccionarProdVenta('${s.cod}')"><div class="text-[10px] font-black text-rose-500">${s.cod}</div><div class="text-sm font-bold">${s.nom}</div><div class="text-rose-600 font-black">$${s.pre}</div></div>`).join('');
+        div.classList.remove('hidden');
+    }
+    function seleccionarProdVenta(cod) { document.getElementById('v-scan').value = cod; document.getElementById('v-sugerencias').classList.add('hidden'); addCarro(); }
     function addCarro() {
-        let cod = document.getElementById('v-scan').value.toUpperCase();
-        let cant = parseInt(document.getElementById('v-cant-v').value) || 1;
+        let cod = document.getElementById('v-scan').value.toUpperCase(), cant = parseInt(document.getElementById('v-cant-v').value) || 1;
         let k = Object.keys(db.stock).find(key => db.stock[key].cod == cod);
-        if(k) {
-            if(db.stock[k].can >= cant) {
-                carro.push({ k, nom: db.stock[k].nom, pre: db.stock[k].pre, cant: cant });
-                document.getElementById('v-scan').value = '';
-                document.getElementById('v-cant-v').value = '1';
-                renderV();
-            } else { alert("Stock insuficiente. Solo quedan: " + db.stock[k].can); }
-        }
+        if(k && db.stock[k].can >= cant) { carro.push({ k, nom: db.stock[k].nom, pre: db.stock[k].pre, cant: cant, tal: db.stock[k].tal }); document.getElementById('v-scan').value = ''; renderV(); }
     }
     function renderV() {
-        let t = 0;
-        document.getElementById('v-t').innerHTML = carro.map((i, idx) => {
-            let sub = i.pre * i.cant; t += sub;
-            return <tr class="uppercase text-xs"><td class="py-3">${i.nom}</td><td>${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>;
-        }).join('');
-        document.getElementById('v-tot').innerText = t;
+        let t = 0; document.getElementById('v-t').innerHTML = carro.map((i, idx) => { let sub = i.pre * i.cant; t += sub; return `<tr class="border-b"><td class="py-3">${i.nom}</td><td class="text-slate-500">T: ${i.tal}</td><td class="text-center">${i.cant}</td><td>$${i.pre}</td><td class="text-rose-600 font-black">$${sub}</td><td class="text-right"><button onclick="carro.splice(${idx},1);renderV()">✕</button></td></tr>`; }).join('');
+        document.getElementById('v-tot').innerText = t.toLocaleString();
     }
     async function finalizarVenta() {
         if(!carro.length) return;
-        let tot = parseInt(document.getElementById('v-tot').innerText);
-        let met = document.getElementById('v-pago').value;
-        let det = document.getElementById('v-pago-detalle').value;
-        let cliKey = document.getElementById('v-cli').value;
-        let mF = (met == 'TRANSFERENCIA' || met == 'TARJETA') ? ${met} (${det}) : met;
-        
-        // Copia del carro para guardar el detalle técnico y poder revertir stock luego si se elimina
-        let detalleProductos = carro.map(c => ({ k: c.k, nom: c.nom, cant: c.cant }));
-
+        let tot = parseInt(document.getElementById('v-tot').innerText.replace(/\./g, ''));
+        let met = document.getElementById('v-pago').value; let cliK = document.getElementById('v-cli').value;
+        let mF = (met == 'TRANSFERENCIA' || met == 'TARJETA') ? `${met} (${document.getElementById('v-pago-detalle').value})` : met;
+        let detalleCaja = "VENTA: " + carro.map(c => `(${c.cant}) ${c.nom}`).join(', ');
         carro.forEach(c => { if(db.stock[c.k]) db.stock[c.k].can -= c.cant; });
-        let nomCli = (cliKey != "null") ? db.clientes[cliKey].nom : "C. FINAL";
-        
-        if(met == "CUENTA CORRIENTE" && cliKey != "null") { db.clientes[cliKey].saldo = (db.clientes[cliKey].saldo || 0) + tot; }
-        
-        let ahora = new Date();
-        db.caja["C"+Date.now()] = { 
-            f: ahora.toISOString().split('T')[0], 
-            h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
-            c: VENTA: ${carro.map(c => c.nom).join(', ')}, 
-            cli: nomCli,
-            cliKey: cliKey, // Guardamos la key para revertir saldo si se elimina
-            v: tot, 
-            tp: "ING", 
-            m: mF,
-            items: detalleProductos // Guardamos los items para revertir stock
-        };
+        const ahora = new Date();
+        const fechaHoy = ahora.toISOString().split('T')[0];
+        if(met == "CUENTA CORRIENTE" && cliK != "null") {
+            if(!db.clientes[cliK].deudas) db.clientes[cliK].deudas = [];
+            db.clientes[cliK].deudas.push({ id: Date.now(), f: fechaHoy, c: detalleCaja, v: tot, saldo: tot });
+            db.clientes[cliK].saldo = (db.clientes[cliK].saldo || 0) + tot;
+        }
+        db.caja["C"+Date.now()] = { f: fechaHoy, h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), c: detalleCaja, cli: (cliK != "null" ? db.clientes[cliK].nom : "C. FINAL"), cliKey: cliK, v: tot, tp: "ING", m: mF, items: carro.map(c => ({k:c.k, cant:c.cant})) };
         carro = []; renderV(); await syncDB("", db);
     }
-
-    // --- ELIMINAR VENTA (LOGICA DE REVERSION) ---
-    async function eliminarMovimiento(id) {
-        if(!confirm("¿Estás seguro de eliminar esta operación? Se revertirá el stock y los saldos de clientes.")) return;
-        
-        const mov = db.caja[id];
-        
-        // 1. Revertir Stock si era una venta
-        if(mov.items && mov.items.length > 0) {
-            mov.items.forEach(item => {
-                if(db.stock[item.k]) db.stock[item.k].can += item.cant;
-            });
-        }
-
-        // 2. Revertir Saldo de Cliente si era Cuenta Corriente o Pago
-        if(mov.m === "CUENTA CORRIENTE" && mov.cliKey !== "null") {
-            if(db.clientes[mov.cliKey]) db.clientes[mov.cliKey].saldo -= mov.v;
-        }
-        
-        // 3. Si era un PAGO RECIBIDO en la ficha, devolvemos la deuda al cliente
-        if(mov.c.includes("PAGO RECIBIDO") && mov.cliKey) {
-            if(db.clientes[mov.cliKey]) db.clientes[mov.cliKey].saldo += mov.v;
-        }
-
-        delete db.caja[id];
-        await syncDB("", db);
+    function renderVentasHoy() {
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('v-historial').innerHTML = Object.values(db.caja).filter(x => x.f === hoy && x.tp === "ING").reverse().map(x => `<tr><td class="py-2 text-rose-500 font-mono">${x.h}</td><td class="font-bold">${x.cli}</td><td class="text-slate-400 italic">${x.c}</td><td>${x.m}</td><td class="text-right font-black text-emerald-600">$${x.v}</td></tr>`).join('');
     }
 
-    // --- STOCK ---
-    async function pushStock() {
-        const k = document.getElementById('s-key').value || "S" + Date.now();
-        db.stock[k] = { cod: document.getElementById('s-cod').value.toUpperCase(), nom: document.getElementById('s-nom').value.toUpperCase(), can: parseInt(document.getElementById('s-can').value) || 0, cos: parseFloat(document.getElementById('s-cos').value) || 0, pre: parseFloat(document.getElementById('s-pre').value) || 0 };
-        await syncDB("stock", db.stock); document.getElementById('s-key').value = ""; limpiarInputs('s');
-    }
-    function renderStock() {
-        let ss = document.getElementById('s-search').value.toLowerCase();
-        document.getElementById('s-t').innerHTML = Object.entries(db.stock).filter(([k,s]) => s.nom.toLowerCase().includes(ss) || s.cod.toLowerCase().includes(ss)).map(([k,s]) => {
-            let rent = s.pre > 0 ? ((s.pre - s.cos) / s.pre) * 100 : 0;
-            return <tr class="uppercase text-[11px] font-bold"><td class="p-3 text-rose-500 font-mono">${s.cod}</td><td class="p-3">${s.nom}</td><td class="p-3 text-center">${s.can}</td><td class="p-3 text-slate-400">$${s.cos}</td><td class="p-3 text-emerald-600 font-black">$${s.pre}</td><td class="p-3 font-black">${rent.toFixed(1)}%</td><td class="p-3 text-right flex justify-end gap-3"><button onclick="editarStock('${k}')">✏️</button><button onclick="elimStock('${k}')">✕</button></td></tr>;
-        }).join('');
-    }
-    function editarStock(k) { let s = db.stock[k]; document.getElementById('s-key').value = k; document.getElementById('s-cod').value = s.cod; document.getElementById('s-nom').value = s.nom; document.getElementById('s-can').value = s.can; document.getElementById('s-cos').value = s.cos; document.getElementById('s-pre').value = s.pre; window.scrollTo(0,0); }
-    async function elimStock(k) { if(confirm("¿Eliminar?")) { delete db.stock[k]; await syncDB("stock", db.stock); } }
-
-    // --- CLIENTES ---
+    // CLIENTES
     async function pushCli() {
         const k = document.getElementById('c-key').value || "L" + Date.now();
-        db.clientes[k] = { nom: document.getElementById('c-nom').value.toUpperCase(), dni: document.getElementById('c-dni').value, cel: document.getElementById('c-cel').value, dir: document.getElementById('c-dir').value, rec: document.getElementById('c-rec').value, saldo: db.clientes[k] ? db.clientes[k].saldo : 0 };
-        await syncDB("clientes", db.clientes); document.getElementById('c-key').value = ""; limpiarInputs('c');
+        db.clientes[k] = { ...db.clientes[k], nom: document.getElementById('c-nom').value.toUpperCase(), dni: document.getElementById('c-dni').value, cel: document.getElementById('c-cel').value, dir: document.getElementById('c-dir').value, rec: document.getElementById('c-rec').value, saldo: db.clientes[k] ? db.clientes[k].saldo : 0 };
+        await syncDB("clientes", db.clientes); limpiarInputs('c');
     }
     function renderClientes() {
         const txt = document.getElementById('c-search').value.toLowerCase();
-        document.getElementById('c-list').innerHTML = Object.entries(db.clientes).filter(([k,v]) => v.nom.toLowerCase().includes(txt)).map(([k,v]) => `
-            <div class="bg-white p-5 rounded-2xl border shadow-sm relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-1 h-full ${v.saldo > 0 ? 'bg-rose-500' : 'bg-emerald-500'}"></div>
-                <div class="flex justify-between items-start mb-3"><h3 class="font-black text-xs uppercase">${v.nom}</h3><div class="flex gap-4"><button onclick="editarCli('${k}')" class="text-blue-500">✏️</button><button onclick="eliminarCli('${k}')" class="text-slate-200">✕</button></div></div>
-                <div class="flex justify-between items-end"><div><p class="text-[9px] font-bold text-slate-400">SALDO</p><p class="text-lg font-black ${v.saldo>0?'text-rose-600':'text-emerald-600'}">$${v.saldo || 0}</p></div><button onclick="verFicha('${k}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase">Ver Ficha</button></div>
-            </div>`).join('');
+        document.getElementById('c-list').innerHTML = Object.entries(db.clientes).filter(([k,v]) => v.nom.toLowerCase().includes(txt)).map(([k,v]) => `<div class="bg-white p-5 rounded-3xl border shadow-sm relative"><div class="absolute top-0 left-0 w-1 h-full ${v.saldo>0?'bg-rose-500':'bg-emerald-400'}"></div><div class="flex justify-between font-black uppercase text-xs mb-3"><span>${v.nom}</span><div class="flex gap-2"><button onclick="editarCli('${k}')">✏️</button><button onclick="elimCli('${k}')">✕</button></div></div><div class="flex justify-between items-end"><div><p class="text-[9px] uppercase text-slate-300">Saldo</p><p class="text-lg font-black ${v.saldo>0?'text-rose-600':'text-emerald-500'}">$${v.saldo || 0}</p></div><button onclick="verFicha('${k}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-bold">Ficha</button></div></div>`).join('');
     }
     function verFicha(k) {
         clienteActualKey = k; const c = db.clientes[k];
-        document.getElementById('ficha-nom').innerText = c.nom;
+        document.getElementById('ficha-nom').innerText = c.nom; 
         document.getElementById('ficha-saldo').innerText = "$" + (c.saldo || 0);
-        document.getElementById('ficha-datos').innerHTML = <span>🪪 DNI: ${c.dni || '---'}</span><span>📱 CEL: ${c.cel || '---'}</span><span>📍 DIR: ${c.dir || '---'}</span>;
-        const movs = Object.values(db.caja).filter(x => x.cli === c.nom || (x.c && x.c.includes(c.nom))).reverse();
-        document.getElementById('ficha-movimientos').innerHTML = movs.map(x => <tr class="border-b"><td class="py-3 text-slate-400 font-mono text-[10px]">${x.f}</td><td class="py-3 uppercase text-slate-600 text-[10px]">${x.c}</td><td class="py-3 text-right ${x.c && x.c.includes('PAGO') ? 'text-emerald-600' : 'text-rose-600'} font-black">$${x.v}</td></tr>).join('');
+        document.getElementById('ficha-datos').innerHTML = `<span>DNI: ${c.dni}</span><span>CEL: ${c.cel}</span>`;
+        const hoy = new Date();
+        document.getElementById('lista-deudas-individuales').innerHTML = (c.deudas || []).filter(d => d.saldo > 0).map(d => {
+            const fDeuda = new Date(d.f);
+            const diff = Math.floor((hoy - fDeuda) / (1000 * 60 * 60 * 24));
+            const restantes = 30 - diff;
+            return `<div class="bg-slate-50 p-2 rounded-xl border flex justify-between items-center text-[9px] uppercase"><div><p class="font-bold">${d.c}</p><p class="text-[8px] text-slate-400">${d.f}</p></div><div class="text-right"><p class="font-black text-rose-500">$${d.saldo}</p><p class="${restantes<=0?'text-rose-600 font-black':'text-slate-500'}">${restantes<=0?'VENCIDO':'Vence en: '+restantes+' d'}</p></div></div>`;
+        }).join('') || '<p class="text-[9px] italic text-slate-300 text-center">Sin deudas</p>';
+        const movs = Object.values(db.caja).filter(x => x.cliKey === k).reverse();
+        document.getElementById('ficha-movimientos').innerHTML = movs.map(x => `<tr class="border-b"><td class="py-3 text-slate-400 font-mono text-[9px]">${x.f}</td><td class="py-3 text-[9px] uppercase">${x.c}</td><td class="py-3 text-right font-black ${x.c.includes('PAGO') ? 'text-emerald-600' : 'text-rose-600'}">$${x.v}</td></tr>`).join('');
         document.getElementById('modal-cliente').classList.remove('hidden');
     }
-    async function cobrarFicha() {
-        const monto = parseInt(prompt("Ingrese monto del cobro:"));
-        const metodo = document.getElementById('ficha-metodo-pago').value;
-        if(monto > 0) {
-            db.clientes[clienteActualKey].saldo -= monto;
-            const ahora = new Date();
-            db.caja["P"+Date.now()] = { f: ahora.toISOString().split('T')[0], h: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), c: "PAGO RECIBIDO: " + db.clientes[clienteActualKey].nom, cli: db.clientes[clienteActualKey].nom, cliKey: clienteActualKey, v: monto, tp: "ING", m: metodo };
-            await syncDB("", db); cerrarFicha();
+    async function deudaManual() {
+        const concepto = prompt("Concepto:"); const monto = parseInt(prompt("Monto:"));
+        if(concepto && monto > 0) {
+            const fechaHoy = new Date().toISOString().split('T')[0];
+            if(!db.clientes[clienteActualKey].deudas) db.clientes[clienteActualKey].deudas = [];
+            db.clientes[clienteActualKey].deudas.push({ id: Date.now(), f: fechaHoy, c: "CARGA MANUAL: " + concepto.toUpperCase(), v: monto, saldo: monto });
+            db.clientes[clienteActualKey].saldo = (db.clientes[clienteActualKey].saldo || 0) + monto;
+            db.caja["D"+Date.now()] = { f: fechaHoy, h: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), c: "DEUDA MANUAL: "+concepto.toUpperCase(), cli: db.clientes[clienteActualKey].nom, cliKey: clienteActualKey, v: monto, tp: "ING", m: "CUENTA CORRIENTE" };
+            await syncDB("", db);
         }
     }
-    function editarCli(k) { const c = db.clientes[k]; document.getElementById('c-key').value = k; document.getElementById('c-nom').value = c.nom; document.getElementById('c-dni').value = c.dni; document.getElementById('c-cel').value = c.cel; document.getElementById('c-dir').value = c.dir; document.getElementById('c-rec').value = c.rec; window.scrollTo(0,0); }
-    async function eliminarCli(k) { if(confirm("¿Eliminar?")) { delete db.clientes[k]; await syncDB("clientes", db.clientes); } }
-    function cerrarFicha() { document.getElementById('modal-cliente').classList.add('hidden'); }
+    async function cobrarFicha() {
+        let montoPago = parseInt(prompt("Monto que entrega el cliente:")); 
+        if(montoPago > 0) {
+            let pagoOriginal = montoPago; const c = db.clientes[clienteActualKey]; c.saldo -= montoPago;
+            if(c.deudas) {
+                c.deudas.sort((a,b) => new Date(a.f) - new Date(b.f));
+                for(let d of c.deudas) {
+                    if(d.saldo > 0) {
+                        if(montoPago >= d.saldo) { montoPago -= d.saldo; d.saldo = 0; } 
+                        else { d.saldo -= montoPago; montoPago = 0; break; }
+                    }
+                }
+            }
+            db.caja["P"+Date.now()] = { f: new Date().toISOString().split('T')[0], h: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), c: "PAGO RECIBIDO (A CTA)", cli: c.nom, cliKey: clienteActualKey, v: pagoOriginal, tp: "ING", m: "EFECTIVO" };
+            await syncDB("", db);
+        }
+    }
+    function cerrarFicha() { document.getElementById('modal-cliente').classList.add('hidden'); clienteActualKey = null; }
+    function editarCli(k) { let c = db.clientes[k]; document.getElementById('c-key').value = k; document.getElementById('c-nom').value = c.nom; document.getElementById('c-dni').value = c.dni; document.getElementById('c-cel').value = c.cel; document.getElementById('c-dir').value = c.dir; document.getElementById('c-rec').value = c.rec; window.scrollTo(0,0); }
+    async function elimCli(k) { if(confirm("¿Eliminar?")) { delete db.clientes[k]; await syncDB("clientes", db.clientes); } }
 
-    // --- CAJA ---
+    // CAJA
     function renderCaja() {
-        const d = document.getElementById('x-desde').value, h = document.getElementById('x-hasta').value, m = document.getElementById('x-filtro-medio').value, s = document.getElementById('x-search').value.toLowerCase();
-        
-        let movs = Object.entries(db.caja).map(([key, val]) => ({...val, id: key}))
-            .filter(x => (!d || x.f >= d) && (!h || x.f <= h) && (m == "TODOS" || (x.m && x.m.includes(m))) && (x.c.toLowerCase().includes(s)));
-        
-        movs.sort((a,b) => ordenAsc ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id));
-        
-        let tI=0, tE=0, cH="";
-        movs.forEach(x => { 
+        let tI=0, tE=0, cH=""; const fF = document.getElementById('x-filtro-fecha').value; const fT = document.getElementById('x-filtro-tipo').value;
+        const fM = document.getElementById('x-filtro-medio').value; const fX = document.getElementById('x-filtro-texto').value.toLowerCase();
+        Object.entries(db.caja).reverse().filter(([id, x]) => {
+            let mF = fF ? x.f === fF : true; let mT = fT === "TODOS" ? true : x.tp === fT;
+            let mM = fM === "TODOS" ? true : x.m.includes(fM); let mX = (x.cli && x.cli.toLowerCase().includes(fX)) || (x.c && x.c.toLowerCase().includes(fX));
+            return mF && mT && mM && mX;
+        }).forEach(([id, x]) => { 
             if(x.tp=='ING') tI+=x.v; else tE+=x.v; 
-            cH+=`<tr class="text-[10px] font-bold border-b">
-                <td class="p-4"><span class="block text-slate-400 font-mono">${x.f}</span><span class="text-rose-500">${x.h || ''}</span></td>
-                <td class="p-4 uppercase text-slate-400">${x.cli || '---'}</td>
-                <td class="p-4 uppercase text-slate-600">${x.c}</td>
-                <td class="p-4"><span class="bg-slate-100 px-2 py-1 rounded text-[9px] font-black">${x.m||'-'}</span></td>
-                <td class="p-4 text-right ${x.tp=='ING'?'text-emerald-600':'text-rose-600'}">$${x.v.toLocaleString()}</td>
-                <td class="p-4 text-right"><button onclick="eliminarMovimiento('${x.id}')" class="text-slate-300 hover:text-rose-600 transition-colors text-lg">✕</button></td>
-            </tr>`; 
+            cH+=`<tr class="border-b"><td class="p-4">${x.f} <br> ${x.h}</td><td class="p-4 uppercase">${x.cli || '-'}</td><td class="p-4 text-slate-500 uppercase">${x.c}</td><td class="p-4 uppercase">${x.m}</td><td class="p-4 text-right ${x.tp=='ING'?'text-emerald-500':'text-rose-600'} font-black">$${x.v.toLocaleString()}</td><td class="p-4 text-right"><button onclick="elimMov('${id}')">✕</button></td></tr>`; 
         });
-        document.getElementById('resumen-caja').innerHTML = <div class="bg-white p-4 rounded-xl border-b-4 border-emerald-500 text-center"><p class="text-[10px]">INGRESOS</p><p class="text-xl font-black text-emerald-600">$${tI.toLocaleString()}</p></div><div class="bg-white p-4 rounded-xl border-b-4 border-rose-500 text-center"><p class="text-[10px]">EGRESOS</p><p class="text-xl font-black text-rose-600">$${tE.toLocaleString()}</p></div><div class="bg-slate-900 p-4 rounded-xl text-white text-center"><p class="text-[10px]">NETO</p><p class="text-xl font-black">$${(tI-tE).toLocaleString()}</p></div>;
-        document.getElementById('x-t').innerHTML = cH;
+        document.getElementById('resumen-caja').innerHTML = `<div class="bg-white p-4 rounded-3xl border-b-4 border-emerald-400 text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Ingresos</p><p class="text-xl font-black text-emerald-500">$${tI.toLocaleString()}</p></div><div class="bg-white p-4 rounded-3xl border-b-4 border-rose-500 text-center"><p class="text-[9px] font-bold text-slate-400 uppercase">Egresos</p><p class="text-xl font-black text-rose-600">$${tE.toLocaleString()}</p></div><div class="bg-slate-900 p-4 rounded-3xl text-white text-center shadow-lg"><p class="text-[9px] font-bold text-slate-300 uppercase">Neto</p><p class="text-xl font-black">$${(tI-tE).toLocaleString()}</p></div>`;
+        document.getElementById('x-t').innerHTML = cH || '<tr><td colspan="6" class="text-center py-10 text-slate-300 italic">No hay resultados</td></tr>';
     }
-    function toggleOrden() { ordenAsc = !ordenAsc; document.getElementById('btn-orden').innerText = ordenAsc ? "ANTIGUOS ↑" : "RECIENTES ↓"; renderCaja(); }
+    async function elimMov(id) {
+        if(!confirm("¿Revertir operación?")) return;
+        const m = db.caja[id];
+        if(m.items) m.items.forEach(i => { if(db.stock[i.k]) db.stock[i.k].can += i.cant; });
+        if(m.m.includes("CUENTA CORRIENTE") && m.cliKey && db.clientes[m.cliKey]) {
+            db.clientes[m.cliKey].saldo -= m.v;
+            db.clientes[m.cliKey].deudas = db.clientes[m.cliKey].deudas.filter(d => d.id !== parseInt(id.substring(1)) && d.v !== m.v);
+        }
+        delete db.caja[id]; await syncDB("", db);
+    }
 
-    // --- UI ---
-    function ir(id, btn) { document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('activa'); btn.classList.add('active'); }
-    function toggleDetallePago() { const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle'); const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; if(DET[m]){ s.classList.remove('hidden'); s.innerHTML = DET[m].map(o=><option value="${o}">${o}</option>).join(''); } else { s.classList.add('hidden'); } }
-    function renderVUI() {
-        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=><option value="${m}">${m}</option>).join('');
-        document.getElementById('v-cli').innerHTML = '<option value="null">CONSUMIDOR FINAL</option>' + Object.entries(db.clientes).map(([k,v])=><option value="${k}">${v.nom}</option>).join('');
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('v-historial').innerHTML = Object.values(db.caja).filter(x => x.f === hoy && x.tp === "ING").reverse().map(x => <tr class="text-[11px] font-bold"><td class="py-3 text-slate-400 font-mono">${x.h || '--:--'}</td><td class="py-3 uppercase text-slate-400">${x.cli || 'C. FINAL'}</td><td class="py-3 uppercase text-slate-600">${x.c}</td><td class="py-3"><span class="bg-slate-100 px-2 py-1 rounded text-[9px]">${x.m}</span></td><td class="py-3 text-right font-black">$${x.v.toLocaleString()}</td></tr>).join('');
+    // EXPORTAR EXCEL
+    function exportarExcel(tipo) {
+        let data = []; let nom = "";
+        if (tipo === 'stock') {
+            nom = "STOCK";
+            data = Object.values(db.stock).map(s => ({ CODIGO: s.cod, PRODUCTO: s.nom, MARCA: s.mar, TALLE: s.tal, COLOR: s.col, CANT: s.can, COSTO: s.cos, VENTA: s.pre }));
+        } else if (tipo === 'clientes') {
+            nom = "CLIENTES";
+            data = Object.values(db.clientes).map(c => ({ NOMBRE: c.nom, DNI: c.dni, CEL: c.cel, SALDO: c.saldo || 0 }));
+        } else {
+            nom = tipo === 'ventas' ? "VENTAS_HOY" : "CAJA";
+            const hoy = new Date().toISOString().split('T')[0];
+            data = Object.values(db.caja).filter(x => tipo === 'ventas' ? x.f === hoy && x.tp === "ING" : true).map(x => ({ FECHA: x.f, HORA: x.h, CLIENTE: x.cli, CONCEPTO: x.c, MONTO: x.v, MEDIO: x.m }));
+        }
+        if(!data.length) return alert("Sin datos");
+        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+        XLSX.writeFile(wb, `${nom}_${new Date().toLocaleDateString()}.xlsx`);
     }
-    function limpiarInputs(p) { document.querySelectorAll(input[id^="${p}-"]).forEach(i => i.value = ''); }
+
+    // UI
+    function ir(id, btn) { document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('activa'); btn.classList.add('active'); }
+    function toggleDetallePago() { 
+        const m = document.getElementById('v-pago').value, s = document.getElementById('v-pago-detalle'); 
+        const DET = { "TRANSFERENCIA": ["MERCADO PAGO", "UALA", "BRUBANK"], "TARJETA": ["DEBITO", "CREDITO"] }; 
+        if(DET[m]){ s.classList.remove('hidden'); s.innerHTML = DET[m].map(o=>`<option value="${o}">${o}</option>`).join(''); } else { s.classList.add('hidden'); } 
+    }
+    function renderVUI() { 
+        document.getElementById('v-pago').innerHTML = ["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA CORRIENTE"].map(m=>`<option value="${m}">${m}</option>`).join(''); 
+        document.getElementById('v-cli').innerHTML = '<option value="null">CONSUMIDOR FINAL</option>' + Object.entries(db.clientes).map(([k,v])=>`<option value="${k}">${v.nom}</option>`).join(''); 
+    }
+    function limpiarInputs(p) { document.querySelectorAll(`input[id^="${p}-"]`).forEach(i => i.value = ''); }
+    document.addEventListener('click', (e) => { if (e.target.id !== 'v-scan') document.getElementById('v-sugerencias').classList.add('hidden'); });
+
     loadDB();
 </script>
 </body>
